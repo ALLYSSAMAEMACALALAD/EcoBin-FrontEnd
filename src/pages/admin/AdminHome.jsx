@@ -37,7 +37,7 @@ function Dashboard() {
   const a = useLoader(() => api('/analytics'));
   const reports = useLoader(() => api('/dumping-reports'));
   const routes = useLoader(() => api('/routes'));
-  const points = useLoader(() => api('/collection-points'));
+  const hubs = useLoader(() => api('/hubs'));
 
   if (a.loading) return <p className="muted">Loading…</p>;
   if (a.error) return <Notice kind="error">{a.error}</Notice>;
@@ -101,14 +101,11 @@ function Dashboard() {
       </div>
 
       <div className="points-section">
-        <Card title="Collection points and map">
+        <Card title="Drop-off hubs">
           <Table columns={[
             { key: 'name', label: 'Name' },
-            { key: 'type', label: 'Type' },
-            { key: 'coordinates', label: 'Coordinates', render: (r) => (r.lat == null ? <span className="muted">not set</span> : `${r.lat}, ${r.lng}`) },
-            { key: 'map', label: 'Map', render: (r) => (r.lat == null ? <span className="muted">-</span>
-              : <a href={`https://www.google.com/maps?q=${r.lat},${r.lng}`} target="_blank" rel="noreferrer">Open map</a>) },
-          ]} rows={points.data?.points || []} empty="No collection points yet." />
+            { key: 'address', label: 'Address', render: (r) => r.address || <span className="muted">Not set</span> },
+          ]} rows={hubs.data?.hubs || []} empty="No drop-off hubs yet." />
         </Card>
       </div>
     </>

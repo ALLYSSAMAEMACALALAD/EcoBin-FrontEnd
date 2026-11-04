@@ -6,6 +6,7 @@
 !.env.example
 
 # Dependencies
+node_modules/
 vendor/
 app/vendor/
 composer.lock

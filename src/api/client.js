@@ -1,5 +1,7 @@
 // Fetch wrapper for the LavaLust API. Sends the JWT access token and, on a 401, refreshes once and retries.
 const TOKEN_KEY = 'ecobin.tokens';
+const REQUEST_TIMEOUT_MS = 60000;
+const pendingGetRequests = new Map();
 
 export const tokenStore = {
   get() {
@@ -13,6 +15,21 @@ export const tokenStore = {
   },
 };
 
+async function fetchWithTimeout(url, options) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function send(path, { method = 'GET', body, headers = {} } = {}) {
   const opts = { method, headers: { ...headers } };
   const tokens = tokenStore.get();
@@ -23,14 +40,14 @@ async function send(path, { method = 'GET', body, headers = {} } = {}) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-  return fetch(`/api${path}`, opts);
+  return fetchWithTimeout(`/api${path}`, opts);
 }
 
 /** Exchanges the refresh token for a new pair. The server rotates it, so the old one stops working. */
 async function refreshTokens() {
   const tokens = tokenStore.get();
   if (!tokens?.refresh_token) return false;
-  const res = await fetch('/api/auth/refresh', {
+  const res = await fetchWithTimeout('/api/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: tokens.refresh_token }),
@@ -41,7 +58,7 @@ async function refreshTokens() {
   return true;
 }
 
-export async function api(path, opts = {}) {
+async function request(path, opts) {
   let res = await send(path, opts);
   if (res.status === 401 && path !== '/auth/login' && (await refreshTokens())) {
     res = await send(path, opts);
@@ -54,6 +71,20 @@ export async function api(path, opts = {}) {
     throw err;
   }
   return data;
+}
+
+export function api(path, opts = {}) {
+  if ((opts.method || 'GET').toUpperCase() !== 'GET' || opts.body !== undefined) {
+    return request(path, opts);
+  }
+
+  const key = `${tokenStore.get()?.access_token || ''}:${path}`;
+  const pending = pendingGetRequests.get(key);
+  if (pending) return pending;
+
+  const current = request(path, opts).finally(() => pendingGetRequests.delete(key));
+  pendingGetRequests.set(key, current);
+  return current;
 }
 
 // Unique key per drop-off submission, so a retried request cannot credit points twice.

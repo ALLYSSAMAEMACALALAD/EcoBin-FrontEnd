@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
@@ -129,54 +128,68 @@ function Overview() {
   const { user } = useAuth();
   const balance = useLoader(() => api('/balance'));
   const drops = useLoader(() => api('/dropoffs'));
+  const schedules = useLoader(() => api('/schedules'));
+  const routes = useLoader(() => api('/routes'));
 
   const points = getBalance(balance.data);
 
   return (
-    <div className="grid-2">
-      <Card title="Your eco-ID">
-        <p className="muted">
-          Show this QR code at a drop-off hub. The collector scans it to credit your points.
-        </p>
+    <>
+      <div className="grid-2">
+        <Card title="Your eco-ID">
+          <p className="muted">
+            Show this QR code at a drop-off hub. The collector scans it to credit your points.
+          </p>
 
-        <div className="qr">
-          <QRCodeSVG value={user.eco_id} size={180} includeMargin />
-        </div>
+          <div className="qr">
+            <QRCodeSVG value={user.eco_id} size={180} includeMargin />
+          </div>
 
-        <p className="center mono">{user.eco_id}</p>
-      </Card>
+          <p className="center mono">{user.eco_id}</p>
+        </Card>
 
-      <Card title="Points balance">
-        <p className="big">
-          {points === null ? 'Loading...' : points}
-        </p>
+        <Card title="Available points">
+          <p className="big">
+            {points !== null ? `${points} pts` : balance.loading ? 'Loading...' : 'Unavailable'}
+          </p>
 
-        <p className="muted">
-          Points you can redeem for rewards.
-        </p>
+          {balance.error && <Notice kind="error">{balance.error}</Notice>}
 
-        <h3>Recent drop-offs</h3>
+          <p className="muted">
+            Points you can redeem for rewards.
+          </p>
 
-        <Table
-          columns={[
-            {
-              key: 'created_at',
-              label: 'Date',
-              render: (r) => fmtDate(r.created_at)
-            },
-            {
-              key: 'material',
-              label: 'Material',
-              render: (r) => cap(r.material)
-            },
-            { key: 'weight_kg', label: 'kg' },
-            { key: 'points', label: 'Points' }
-          ]}
-          rows={drops.data?.dropoffs?.slice(0, 8)}
-          empty="No drop-offs yet. Bring your sorted recyclables to a hub."
-        />
-      </Card>
-    </div>
+          <button className="btn ghost" type="button" onClick={() => balance.reload()}>
+            Refresh points
+          </button>
+
+          <h3>Recent drop-offs</h3>
+
+          <Table
+            columns={[
+              {
+                key: 'created_at',
+                label: 'Date',
+                render: (r) => fmtDate(r.created_at)
+              },
+              {
+                key: 'material',
+                label: 'Material',
+                render: (r) => cap(r.material)
+              },
+              { key: 'weight_kg', label: 'kg' },
+              { key: 'points', label: 'Points' }
+            ]}
+            rows={drops.data?.dropoffs?.slice(0, 8)}
+            empty="No drop-offs yet. Bring your sorted recyclables to a hub."
+          />
+        </Card>
+      </div>
+      <div className="grid-2">
+        <CollectionScheduleCard schedules={schedules} zone={user.barangay} />
+        <PickupCard routes={routes} />
+      </div>
+    </>
   );
 }
 
@@ -185,23 +198,75 @@ function Overview() {
 // ==========================================
 
 function Schedule() {
+  const { user } = useAuth();
   const schedules = useLoader(() => api('/schedules'));
   const routes = useLoader(() => api('/routes'));
 
-  const myStops = (routes.data?.routes || []).flatMap((r) =>
+  return (
+    <div className="grid-2">
+      <CollectionScheduleCard schedules={schedules} zone={user.barangay} />
+      <PickupCard routes={routes} />
+    </div>
+  );
+}
+
+function PickupCard({ routes }) {
+  const pickups = (routes.data?.routes || []).flatMap((r) =>
     (r.stops || []).map((s) => ({
       ...s,
       route: r.name,
-      date: r.route_date,
-      status_route: r.status
+      date: r.route_date
     }))
   );
 
   return (
-    <div className="grid-2">
-      <Card title="Collection schedule for your barangay">
+    <Card title="Your pickup schedule">
+      {routes.loading ? (
+        <p className="muted">Loading pickups…</p>
+      ) : routes.error ? (
+        <Notice kind="error">{routes.error}</Notice>
+      ) : (
         <Table
           columns={[
+            { key: 'route', label: 'Route' },
+            { key: 'date', label: 'Pickup date' },
+            { key: 'address', label: 'Pickup location' },
+            {
+              key: 'status',
+              label: 'Pickup status',
+              render: (r) => (
+                <span className={`badge s-${r.status}`}>
+                  {cap(r.status)}
+                </span>
+              )
+            }
+          ]}
+          rows={pickups}
+          empty="No pickup routes have been published yet."
+        />
+      )}
+    </Card>
+  );
+}
+
+function CollectionScheduleCard({ schedules, zone }) {
+  return (
+    <Card
+      title={`Collection schedule${zone ? ` for ${zone}` : ' for your barangay'}`}
+      actions={
+        <button className="btn ghost" type="button" onClick={() => schedules.reload()}>
+          Refresh
+        </button>
+      }
+    >
+      {schedules.loading ? (
+        <p className="muted">Loading collection schedules…</p>
+      ) : schedules.error ? (
+        <Notice kind="error">{schedules.error}</Notice>
+      ) : (
+        <Table
+          columns={[
+            { key: 'zone', label: 'Barangay / zone' },
             { key: 'collection_day', label: 'Day' },
             { key: 'time_slot', label: 'Time' },
             {
@@ -210,35 +275,15 @@ function Schedule() {
               render: (r) => cap(r.waste_type)
             }
           ]}
-          rows={schedules.data?.schedules}
+          rows={schedules.data?.schedules || []}
           empty="No schedule published for your barangay yet."
         />
+      )}
 
-        <p className="muted">
-          You'll receive SMS and email reminders before each pickup.
-        </p>
-      </Card>
-
-      <Card title="Your upcoming pickups">
-        <Table
-          columns={[
-            { key: 'date', label: 'Date' },
-            { key: 'address', label: 'Address' },
-            {
-              key: 'status',
-              label: 'Status',
-              render: (r) => (
-                <span className={`badge s-${r.status}`}>
-                  {cap(r.status)}
-                </span>
-              )
-            }
-          ]}
-          rows={myStops}
-          empty="No pickups assigned to you yet."
-        />
-      </Card>
-    </div>
+      <p className="muted">
+        You'll receive SMS and email reminders before each pickup.
+      </p>
+    </Card>
   );
 }
 
@@ -368,8 +413,10 @@ function Rewards() {
 
       <Card title="Your available points">
         <p className="big">
-          {points === null ? 'Loading...' : `${points} pts`}
+          {points !== null ? `${points} pts` : balance.loading ? 'Loading...' : 'Unavailable'}
         </p>
+
+        {balance.error && <Notice kind="error">{balance.error}</Notice>}
 
         <p className="muted">
           Your available points for redeeming eco-friendly rewards.
@@ -499,6 +546,9 @@ function Rewards() {
 // REPORT DUMPING
 // ==========================================
 
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 function ReportDumping({ onFiled }) {
   const [form, setForm] = useState({
     location: '',
@@ -506,11 +556,49 @@ function ReportDumping({ onFiled }) {
   });
 
   const [photo, setPhoto] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [msg, setMsg] = useState({
     kind: 'info',
     text: ''
   });
   const [busy, setBusy] = useState(false);
+
+  const cameraRef = useRef(null);
+  const galleryRef = useRef(null);
+
+  // Gumagawa ng preview ng larawan at nililinis ang memory kapag nagbago o tinanggal
+  useEffect(() => {
+    if (!photo) {
+      setPreview(null);
+      return undefined;
+    }
+    const url = URL.createObjectURL(photo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+
+  function pickPhoto(file) {
+    if (!file) return;
+
+    if (file.type && !ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      setMsg({
+        kind: 'error',
+        text: 'Gamitin ang JPEG, PNG, o WebP lang.'
+      });
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_BYTES) {
+      setMsg({
+        kind: 'error',
+        text: 'Masyadong malaki ang larawan. Max 5 MB.'
+      });
+      return;
+    }
+
+    setMsg({ kind: 'info', text: '' });
+    setPhoto(file);
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -594,16 +682,69 @@ function ReportDumping({ onFiled }) {
           />
         </label>
 
-        <label>
-          Photo evidence (JPEG, PNG or WebP, max 5 MB)
+        <div className="stack">
+          <span>Photo evidence (optional, max 5 MB)</span>
+
+          {/* Hidden inputs: ang button ang nagbubukas sa mga ito */}
           <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              pickPhoto(e.target.files[0]);
+              e.target.value = '';
+            }}
+          />
+          <input
+            ref={galleryRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) =>
-              setPhoto(e.target.files[0] || null)
-            }
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              pickPhoto(e.target.files[0]);
+              e.target.value = '';
+            }}
           />
-        </label>
+
+          <div className="row">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => cameraRef.current?.click()}
+            >
+              Take photo
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => galleryRef.current?.click()}
+            >
+              Choose from gallery
+            </button>
+          </div>
+
+          {preview && (
+            <div className="stack">
+              <img
+                src={preview}
+                alt="Preview ng ni-report na dumping"
+                style={{ width: '100%', maxWidth: 320, borderRadius: 14, objectFit: 'cover' }}
+              />
+              <div className="row">
+                <span className="muted">{photo.name}</span>
+                <button
+                  type="button"
+                  className="btn small danger"
+                  onClick={() => setPhoto(null)}
+                >
+                  Remove photo
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <button
           className="btn primary"
