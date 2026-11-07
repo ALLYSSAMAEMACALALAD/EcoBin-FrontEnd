@@ -1,0 +1,589 @@
+
+/* =========================================================
+   ECO-BIN RESIDENT DASHBOARD
+   Final UI Refinement
+   Design-only: no application logic changed
+   ========================================================= */
+
+.resident-dashboard {
+  --resident-green-900: #164b36;
+  --resident-green-800: #19583e;
+  --resident-green-700: #206d4b;
+  --resident-green-100: #eef6ec;
+  --resident-line: #dae7db;
+  --resident-muted: #64766b;
+  --resident-surface: #ffffff;
+
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+/* =========================================================
+   1. COMPACT RESIDENT HERO
+   Overrides only the resident dashboard hero.
+   Shared PageHero.jsx remains unchanged.
+   ========================================================= */
+
+.resident-dashboard > .hero {
+  min-height: 0;
+
+  padding:
+    clamp(30px, 3.5vw, 48px)
+    clamp(20px, 4vw, 56px)
+    clamp(34px, 4vw, 52px);
+}
+
+.resident-dashboard > .hero .hero-inner {
+  min-height: 0;
+  max-width: 1160px;
+  gap: 24px;
+}
+
+.resident-dashboard > .hero .eyebrow {
+  margin: 0 0 12px;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.resident-dashboard > .hero h1 {
+  max-width: 22ch;
+
+  font-size: clamp(2rem, 3.4vw, 3.15rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+
+  color: #ffffff;
+}
+
+.resident-dashboard > .hero .hero-text {
+  max-width: 58ch;
+  margin: 14px 0 0;
+
+  font-size: clamp(0.94rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+  color: #e0eee4;
+}
+
+/* Decorative green circles remain unchanged. */
+
+/* =========================================================
+   2. RESIDENT NAVIGATION
+   ========================================================= */
+
+.resident-dashboard > .tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 8px;
+  overflow: visible;
+
+  padding: 8px;
+  margin: 0 0 24px;
+
+  background: var(--resident-surface);
+  border: 1px solid var(--resident-line);
+  border-radius: 16px;
+
+  box-shadow: 0 6px 24px rgba(18, 65, 43, 0.045);
+}
+
+.resident-dashboard > .tabs > button {
+  flex: 0 0 auto;
+  min-height: 42px;
+
+  padding: 10px 17px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: transparent;
+  color: var(--resident-green-900);
+
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.resident-dashboard > .tabs > button:hover:not(.active) {
+  background: var(--resident-green-100);
+}
+
+.resident-dashboard > .tabs > button.active {
+  background: var(--resident-green-700);
+  color: #ffffff;
+}
+
+.resident-dashboard > .tabs > button:focus-visible {
+  outline: 3px solid #92cda4;
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   3. DASHBOARD GRID
+   ========================================================= */
+
+.resident-dashboard .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 20px;
+  align-items: stretch;
+
+  margin-bottom: 20px;
+}
+
+.resident-dashboard .grid-2 > *,
+.resident-dashboard .stack > * {
+  min-width: 0;
+}
+
+.resident-dashboard .grid-2 > .card {
+  height: 100%;
+}
+
+/* =========================================================
+   4. DASHBOARD CARDS
+   ========================================================= */
+
+.resident-dashboard .card {
+  min-width: 0;
+  margin-bottom: 0;
+
+  padding: clamp(18px, 2vw, 26px);
+
+  background: var(--resident-surface);
+  border: 1px solid var(--resident-line);
+  border-radius: 18px;
+
+  box-shadow: 0 8px 28px rgba(16, 65, 42, 0.055);
+}
+
+.resident-dashboard > .card,
+.resident-dashboard > .stack > .card {
+  margin-bottom: 20px;
+}
+
+.resident-dashboard .card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resident-dashboard .card h2,
+.resident-dashboard .card h3 {
+  color: var(--resident-green-900);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.resident-dashboard .card h3 {
+  margin-top: 18px;
+}
+
+.resident-dashboard .card h3:first-child {
+  margin-top: 0;
+}
+
+.resident-dashboard .muted {
+  color: var(--resident-muted);
+  line-height: 1.65;
+}
+
+/* =========================================================
+   5. AVAILABLE POINTS
+   ========================================================= */
+
+.resident-dashboard .big {
+  margin: 8px 0 12px;
+
+  color: var(--resident-green-700);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+/* =========================================================
+   6. ECO-ID QR CODE
+   ========================================================= */
+
+.resident-dashboard .qr {
+  display: grid;
+  place-items: center;
+
+  width: fit-content;
+  max-width: 100%;
+
+  margin: 20px auto;
+  padding: 18px;
+
+  background: #f5faf4;
+  border: 1px solid var(--resident-line);
+  border-radius: 16px;
+
+  box-shadow: 0 5px 18px rgba(16, 65, 42, 0.035);
+}
+
+.resident-dashboard .qr svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.resident-dashboard .mono {
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   7. EXISTING TABLES
+   ========================================================= */
+
+.resident-dashboard .table-wrap {
+  width: 100%;
+  max-width: 100%;
+
+  overflow-x: auto;
+
+  background: #ffffff;
+  border: 1px solid var(--resident-line);
+  border-radius: 12px;
+}
+
+.resident-dashboard .table-wrap table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.resident-dashboard .table-wrap th {
+  background: #f2f7f0;
+  color: var(--resident-green-900);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.resident-dashboard .table-wrap th,
+.resident-dashboard .table-wrap td {
+  padding: 12px 13px;
+
+  border-bottom: 1px solid #e7eee6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.resident-dashboard .table-wrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.resident-dashboard .table-wrap tbody tr:hover {
+  background: #fafcf8;
+}
+
+/* =========================================================
+   8. REWARDS CARDS
+   Existing rewards and handlers remain untouched.
+   ========================================================= */
+
+.resident-dashboard .stack > .card .grid-2 {
+  align-items: stretch;
+  gap: 16px;
+}
+
+.resident-dashboard .stack > .card .grid-2 > .card {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+  padding: 20px;
+
+  border-radius: 15px;
+  box-shadow: 0 5px 18px rgba(16, 65, 42, 0.04);
+}
+
+.resident-dashboard .stack > .card .grid-2 > .card h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+.resident-dashboard .stack > .card .grid-2 > .card .btn {
+  align-self: flex-start;
+}
+
+/* =========================================================
+   9. EXISTING BUTTONS
+   ========================================================= */
+
+.resident-dashboard .btn {
+  min-height: 40px;
+  border-radius: 10px;
+  font-weight: 700;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.resident-dashboard .btn.primary {
+  background: var(--resident-green-700);
+  border-color: var(--resident-green-700);
+  color: #ffffff;
+}
+
+.resident-dashboard .btn.primary:hover:not(:disabled) {
+  background: var(--resident-green-900);
+  border-color: var(--resident-green-900);
+}
+
+.resident-dashboard .btn:focus-visible {
+  outline: 3px solid #92cda4;
+  outline-offset: 2px;
+}
+
+.resident-dashboard .btn:disabled {
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   10. FORMS
+   ========================================================= */
+
+.resident-dashboard input:not([type="file"]),
+.resident-dashboard textarea {
+  max-width: 100%;
+  border-radius: 11px;
+}
+
+.resident-dashboard input:focus-visible,
+.resident-dashboard textarea:focus-visible {
+  outline: 2px solid #92cda4;
+  outline-offset: 2px;
+}
+
+.resident-dashboard textarea {
+  resize: vertical;
+}
+
+.resident-dashboard .notice {
+  border-radius: 11px;
+}
+
+/* =========================================================
+   11. STATUS BADGES
+   Existing status colors are preserved.
+   ========================================================= */
+
+.resident-dashboard .badge {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   12. TABLET
+   ========================================================= */
+
+@media (max-width: 850px) {
+  .resident-dashboard > .hero {
+    padding: 34px 22px 40px;
+  }
+
+  .resident-dashboard > .hero h1 {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+  }
+
+  .resident-dashboard .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .resident-dashboard .grid-2 > .card {
+    height: auto;
+  }
+}
+
+/* =========================================================
+   13. MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .resident-dashboard {
+    padding-bottom: 16px;
+  }
+
+  .resident-dashboard > .hero {
+    padding: 30px 20px 36px;
+  }
+
+  .resident-dashboard > .hero .eyebrow {
+    margin-bottom: 10px;
+  }
+
+  .resident-dashboard > .hero h1 {
+    max-width: 100%;
+
+    font-size: clamp(1.8rem, 7vw, 2.35rem);
+    line-height: 1.15;
+  }
+
+  .resident-dashboard > .hero .hero-text {
+    margin-top: 12px;
+    font-size: 0.93rem;
+    line-height: 1.6;
+  }
+
+  .resident-dashboard > .tabs {
+    gap: 6px;
+    padding: 6px;
+    margin-bottom: 18px;
+  }
+
+  .resident-dashboard > .tabs > button {
+    flex: 1 1 auto;
+
+    min-height: 40px;
+    padding: 9px 11px;
+
+    font-size: 0.82rem;
+  }
+
+  .resident-dashboard .card {
+    padding: 17px;
+    border-radius: 15px;
+  }
+
+  .resident-dashboard .stack > .card .grid-2 {
+    gap: 14px;
+  }
+
+  .resident-dashboard .stack > .card .grid-2 > .card {
+    padding: 17px;
+  }
+
+  .resident-dashboard .qr {
+    padding: 12px;
+  }
+
+  .resident-dashboard .table-wrap th,
+  .resident-dashboard .table-wrap td {
+    padding: 10px;
+    font-size: 0.82rem;
+  }
+}
+
+/* =========================================================
+   14. ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .resident-dashboard > .tabs > button,
+  .resident-dashboard .btn {
+    transition: none;
+  }
+}
+
+
+
+/* =========================================================
+   ECO-BIN RESIDENT DASHBOARD
+   Equal-height and top-aligned Overview cards
+   Presentation-only fix
+   ========================================================= */
+
+/* Overview grid rows: two equal-width columns */
+.resident-dashboard > .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  /* Align cards at the same top edge */
+  align-items: stretch;
+}
+
+/* Remove layout offsets from direct card children */
+.resident-dashboard > .grid-2 > .card {
+  align-self: stretch;
+
+  height: 100%;
+  min-width: 0;
+
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Same alignment for the second Overview row */
+.resident-dashboard > .grid-2 + .grid-2 {
+  margin-top: 0;
+}
+
+/* Responsive: keep the cards stacked on small screens */
+@media (max-width: 850px) {
+  .resident-dashboard > .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .resident-dashboard > .grid-2 > .card {
+    height: auto;
+  }
+}
+
+
+/* ==============================================
+   ECO-BIN REWARDS
+   Fix uneven first-row reward cards
+   Design-only adjustment
+   ============================================== */
+
+/* All reward rows start at the same vertical position */
+.resident-dashboard .stack > .card .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Remove inherited margins causing card offsets */
+.resident-dashboard .stack > .card .grid-2 > .card {
+  margin: 0;
+  height: 100%;
+  min-width: 0;
+  align-self: stretch;
+}
+
+/* Normalize heading spacing */
+.resident-dashboard .stack > .card .grid-2 > .card > h3:first-child {
+  margin: 0 0 14px;
+}
+
+/* Keep both columns aligned consistently */
+.resident-dashboard .stack > .card .grid-2 > .card > .muted {
+  margin-top: 0;
+}
+
+/* Mobile responsive layout */
+@media (max-width: 850px) {
+  .resident-dashboard .stack > .card .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

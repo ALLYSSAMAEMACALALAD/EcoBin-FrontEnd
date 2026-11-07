@@ -12,6 +12,7 @@ import {
 } from '../../components/ui.jsx';
 import PageHero from '../../components/PageHero.jsx';
 import { downloadCertificate } from '../../lib/certificate.js';
+import './ResidentHome.css';
 
 // ==========================================
 // REWARDS CATALOG
@@ -99,7 +100,8 @@ export default function ResidentHome() {
         text="Track your pickups, points, rewards, and reports in one place."
       />
 
-      <nav className="tabs">
+      <div className="resident-dashboard">
+        <nav className="tabs" aria-label="Resident dashboard sections">
         {tabs.map(([k, label]) => (
           <button
             key={k}
@@ -116,6 +118,7 @@ export default function ResidentHome() {
       {tab === 'rewards' && <Rewards />}
       {tab === 'report' && <ReportDumping onFiled={() => setTab('tickets')} />}
       {tab === 'tickets' && <MyTickets />}
+      </div>
     </>
   );
 }
