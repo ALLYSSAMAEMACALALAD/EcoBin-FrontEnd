@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
 import PageHero from '../components/PageHero.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 // Public sign-up always creates a Resident. Collector and admin accounts are created by an admin.
 export default function Register() {
@@ -23,6 +24,7 @@ export default function Register() {
 
   return (
     <div className="public-page">
+      <ThemeToggle floating />
       <PageHero
         eyebrow="Resident sign-up"
         title="Get your eco-ID in one step."
