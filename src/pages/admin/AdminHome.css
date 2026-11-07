@@ -1,0 +1,317 @@
+/* Eco-Bin Admin Dashboard — presentation only.
+   Scoped styles: no changes to API, handlers, labels or permissions. */
+
+/* The shared .content layout normally centers direct non-hero children.
+   AdminHome introduces one wrapper, so restore full width to that wrapper
+   while keeping admin content aligned within the shared page container. */
+.content > .admin-dashboard {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.admin-dashboard {
+  --admin-dark: #164b36;
+  --admin-primary: #206d4b;
+  --admin-soft: #eef6ec;
+  --admin-line: #dae7db;
+  --admin-muted: #64766b;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 48px;
+}
+
+/* Full-width, compact hero without affecting shared PageHero. */
+.admin-dashboard > .hero {
+  width: 100%;
+  min-height: 0;
+  padding: clamp(30px, 3.5vw, 48px) clamp(20px, 4vw, 56px)
+    clamp(34px, 4vw, 52px);
+}
+.admin-dashboard > .hero .hero-inner {
+  max-width: 1160px;
+  min-height: 0;
+}
+.admin-dashboard > .hero .eyebrow {
+  margin-bottom: 12px;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+.admin-dashboard > .hero h1 {
+  max-width: 24ch;
+  font-size: clamp(2rem, 3.4vw, 3.15rem);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+.admin-dashboard > .hero .hero-text {
+  max-width: 65ch;
+  margin-top: 14px;
+  font-size: clamp(0.94rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+}
+
+/* Center every existing admin section beneath the full-width hero. */
+.admin-dashboard > :not(.hero) {
+  width: min(1160px, calc(100% - 40px));
+  margin-left: auto;
+  margin-right: auto;
+}
+.admin-dashboard > .hero + .tabs {
+  margin-top: 28px;
+}
+
+/* Preserve all seven existing tabs and their click handlers. */
+.admin-dashboard > .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  margin-bottom: 24px;
+  overflow: visible;
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(18, 65, 43, 0.045);
+}
+.admin-dashboard > .tabs > button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 10px 15px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--admin-dark);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.admin-dashboard > .tabs > button:hover:not(.active) {
+  background: var(--admin-soft);
+  border-color: transparent;
+}
+.admin-dashboard > .tabs > button.active {
+  background: var(--admin-primary);
+  color: #fff;
+  border-color: var(--admin-primary);
+}
+.admin-dashboard > .tabs > button:focus-visible,
+.admin-dashboard .btn:focus-visible {
+  outline: 3px solid #92cda4;
+  outline-offset: 2px;
+}
+
+/* Existing overview statistics (including the separate resolved row). */
+.admin-dashboard .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.admin-dashboard .stats-second {
+  margin-top: 0;
+  margin-bottom: 22px;
+}
+.admin-dashboard .stat {
+  min-width: 0;
+  min-height: 118px;
+  padding: 21px 22px;
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 17px;
+  box-shadow: 0 8px 28px rgba(16, 65, 42, 0.055);
+}
+.admin-dashboard .stat span {
+  color: var(--admin-primary);
+  font-size: clamp(1.7rem, 2.6vw, 2.25rem);
+}
+.admin-dashboard .stat small {
+  color: var(--admin-muted);
+}
+
+/* Existing two-column forms, tables and dashboard cards. */
+.admin-dashboard .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+.admin-dashboard .grid-2 > * {
+  min-width: 0;
+}
+.admin-dashboard .grid-2 > .card {
+  height: 100%;
+  margin: 0;
+  align-self: stretch;
+}
+.admin-dashboard .grid-2 + .grid-2 {
+  margin-top: 0;
+}
+.admin-dashboard .card {
+  min-width: 0;
+  margin-bottom: 0;
+  padding: clamp(18px, 2vw, 26px);
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(16, 65, 42, 0.055);
+}
+.admin-dashboard > .card,
+.admin-dashboard > .points-section {
+  margin-bottom: 20px;
+}
+.admin-dashboard .card-head {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.admin-dashboard .card h2,
+.admin-dashboard .card h3 {
+  color: var(--admin-dark);
+  line-height: 1.35;
+}
+.admin-dashboard .card h3 {
+  margin-top: 20px;
+}
+.admin-dashboard .muted {
+  color: var(--admin-muted);
+  line-height: 1.65;
+}
+.admin-dashboard .stack {
+  gap: 15px;
+}
+.admin-dashboard .row > * {
+  min-width: 0;
+}
+.admin-dashboard .points-section > .card {
+  margin-bottom: 0;
+}
+
+/* Tables continue to scroll horizontally where necessary. */
+.admin-dashboard .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--admin-line);
+  border-radius: 12px;
+}
+.admin-dashboard .table-wrap table {
+  width: 100%;
+}
+.admin-dashboard .table-wrap th {
+  background: #f2f7f0;
+  color: var(--admin-dark);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+.admin-dashboard .table-wrap td,
+.admin-dashboard .table-wrap th {
+  padding: 12px 13px;
+  vertical-align: middle;
+}
+
+/* Controls: visuals only; disabled states and submit logic are preserved. */
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard textarea {
+  max-width: 100%;
+  border-radius: 11px;
+}
+.admin-dashboard input:focus-visible,
+.admin-dashboard select:focus-visible,
+.admin-dashboard textarea:focus-visible {
+  outline: 2px solid #92cda4;
+  outline-offset: 2px;
+}
+.admin-dashboard .btn {
+  min-height: 40px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.admin-dashboard .btn.primary {
+  color: #fff;
+  background: var(--admin-primary);
+  border-color: var(--admin-primary);
+}
+.admin-dashboard .btn.primary:hover:not(:disabled) {
+  background: var(--admin-dark);
+  border-color: var(--admin-dark);
+}
+.admin-dashboard .badge {
+  border-radius: 999px;
+}
+.admin-dashboard .notice {
+  border-radius: 11px;
+}
+.admin-dashboard .route-item {
+  padding: 16px 0;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .admin-dashboard .grid-2 > .card {
+    height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard {
+    padding-bottom: 24px;
+  }
+  .admin-dashboard > .hero {
+    padding: 30px 20px 36px;
+  }
+  .admin-dashboard > .hero h1 {
+    font-size: clamp(1.8rem, 7vw, 2.35rem);
+  }
+  .admin-dashboard > .hero .hero-text {
+    margin-top: 12px;
+    font-size: 0.93rem;
+  }
+  .admin-dashboard > :not(.hero) {
+    width: min(1160px, calc(100% - 28px));
+  }
+  .admin-dashboard > .hero + .tabs {
+    margin-top: 20px;
+  }
+  .admin-dashboard > .tabs {
+    gap: 5px;
+    padding: 6px;
+    margin-bottom: 18px;
+  }
+  .admin-dashboard > .tabs > button {
+    flex: 1 1 auto;
+    min-height: 40px;
+    padding: 9px 10px;
+    font-size: 0.82rem;
+  }
+  .admin-dashboard .stats {
+    gap: 10px;
+  }
+  .admin-dashboard .stat {
+    min-height: 104px;
+    padding: 18px;
+  }
+  .admin-dashboard .card {
+    padding: 17px;
+    border-radius: 15px;
+  }
+  .admin-dashboard .table-wrap td,
+  .admin-dashboard .table-wrap th {
+    padding: 10px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard > .tabs > button {
+    transition: none;
+  }
+}

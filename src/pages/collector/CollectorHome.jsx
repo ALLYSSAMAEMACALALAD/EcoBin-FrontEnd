@@ -4,12 +4,13 @@ import { api, newIdempotencyKey } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
 import PageHero from '../../components/PageHero.jsx';
+import './CollectorHome.css';
 
 export default function CollectorHome() {
   const { user } = useAuth();
   const [tab, setTab] = useState('route');
   return (
-    <>
+    <div className="collector-dashboard">
       <PageHero eyebrow="Collector dashboard" title={`Dispatch, ${user.name}`} text="Your routes, live truck location, drop-off logging, and dumping tickets." />
       <nav className="tabs">
         <button className={tab === 'route' ? 'active' : ''} onClick={() => setTab('route')}>My route</button>
@@ -21,7 +22,7 @@ export default function CollectorHome() {
       {tab === 'dropoff' && <LogDropoff />}
       {tab === 'history' && <History />}
       {tab === 'tickets' && <Tickets />}
-    </>
+    </div>
   );
 }
 

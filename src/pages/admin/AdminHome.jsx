@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../../api/client.js';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
 import PageHero from '../../components/PageHero.jsx';
+import './AdminHome.css';
 
 const TABS = [
   ['dashboard', 'Dashboard'], ['schedules', 'Schedules'], ['routes', 'Routes & dispatch'],
@@ -11,7 +12,7 @@ const TABS = [
 export default function AdminHome() {
   const [tab, setTab] = useState('dashboard');
   return (
-    <>
+    <div className="admin-dashboard">
       <PageHero eyebrow="Admin console" title="Admin dashboard" text="Schedules, dispatch, rewards, dumping tickets, and staff accounts." />
       <nav className="tabs wrap">
         {TABS.map(([k, label]) => <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{label}</button>)}
@@ -23,7 +24,7 @@ export default function AdminHome() {
       {tab === 'tickets' && <Tickets />}
       {tab === 'users' && <Users />}
       {tab === 'audit' && <Audit />}
-    </>
+    </div>
   );
 }
 

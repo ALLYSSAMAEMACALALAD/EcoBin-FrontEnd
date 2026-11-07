@@ -1,0 +1,144 @@
+/* Eco-Bin Collector Dashboard — visual refinements only.
+   Scoped to .collector-dashboard; existing controls and APIs are unchanged. */
+
+.collector-dashboard {
+  --collector-dark: #164b36;
+  --collector-green: #206d4b;
+  --collector-light: #eef6ec;
+  --collector-border: #dae7db;
+  --collector-muted: #64766b;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 28px;
+}
+
+/* Compact hero: does not change the shared PageHero component. */
+.collector-dashboard > .hero {
+  min-height: 0;
+  padding: clamp(30px, 3.5vw, 48px) clamp(20px, 4vw, 56px) clamp(34px, 4vw, 52px);
+}
+.collector-dashboard > .hero .hero-inner { min-height: 0; gap: 24px; }
+.collector-dashboard > .hero .eyebrow { margin-bottom: 12px; font-size: .72rem; letter-spacing: .16em; }
+.collector-dashboard > .hero h1 {
+  max-width: 23ch;
+  font-size: clamp(2rem, 3.4vw, 3.15rem);
+  line-height: 1.12;
+  letter-spacing: -.045em;
+}
+.collector-dashboard > .hero .hero-text {
+  margin-top: 14px;
+  max-width: 62ch;
+  font-size: clamp(.94rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+}
+
+/* All four existing navigation tabs. */
+.collector-dashboard > .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+  margin: 0 0 24px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--collector-border);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(18,65,43,.045);
+}
+.collector-dashboard > .tabs > button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 10px 17px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--collector-dark);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
+}
+.collector-dashboard > .tabs > button:hover:not(.active) { background: var(--collector-light); }
+.collector-dashboard > .tabs > button.active { background: var(--collector-green); color: #fff; }
+.collector-dashboard > .tabs > button:focus-visible { outline: 3px solid #92cda4; outline-offset: 2px; }
+
+/* Existing Cards, including route, logging, history and tickets. */
+.collector-dashboard .card {
+  min-width: 0;
+  padding: clamp(18px, 2vw, 26px);
+  background: #fff;
+  border: 1px solid var(--collector-border);
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(16,65,42,.055);
+}
+.collector-dashboard > .card { margin-bottom: 20px; }
+.collector-dashboard .card-head { gap: 12px; margin-bottom: 16px; }
+.collector-dashboard .card h2,
+.collector-dashboard .card h3 { color: var(--collector-dark); line-height: 1.35; letter-spacing: -.015em; }
+.collector-dashboard .muted { color: var(--collector-muted); line-height: 1.65; }
+.collector-dashboard .row { gap: 12px; align-items: flex-end; }
+.collector-dashboard .grow { min-width: min(100%, 260px); }
+
+/* Data tables remain scrollable where necessary. */
+.collector-dashboard .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--collector-border);
+  border-radius: 12px;
+}
+.collector-dashboard .table-wrap table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.collector-dashboard .table-wrap th {
+  color: var(--collector-dark);
+  background: #f2f7f0;
+  font-size: .78rem;
+  letter-spacing: .025em;
+  font-weight: 700;
+}
+.collector-dashboard .table-wrap th,
+.collector-dashboard .table-wrap td { padding: 12px 13px; border-bottom: 1px solid #e7eee6; vertical-align: middle; }
+.collector-dashboard .table-wrap tbody tr:last-child td { border-bottom: 0; }
+
+/* Scanner and truck map retain original functionality. */
+.collector-dashboard .map { width: 100%; max-width: 100%; border-radius: 13px; }
+.collector-dashboard .qr-box { max-width: min(100%, 400px); border-radius: 14px; overflow: hidden; }
+.collector-dashboard .qr-box video { max-width: 100%; }
+
+/* Existing inputs, buttons, badges and notices. */
+.collector-dashboard input:not([type="file"]),
+.collector-dashboard select,
+.collector-dashboard textarea { max-width: 100%; border-radius: 11px; }
+.collector-dashboard input:focus-visible,
+.collector-dashboard select:focus-visible,
+.collector-dashboard textarea:focus-visible { outline: 2px solid #92cda4; outline-offset: 2px; }
+.collector-dashboard .btn { min-height: 40px; border-radius: 10px; font-weight: 700; }
+.collector-dashboard .btn.primary { background: var(--collector-green); border-color: var(--collector-green); color: #fff; }
+.collector-dashboard .btn.primary:hover:not(:disabled) { background: var(--collector-dark); border-color: var(--collector-dark); }
+.collector-dashboard .btn:focus-visible { outline: 3px solid #92cda4; outline-offset: 2px; }
+.collector-dashboard .btn:disabled { cursor: not-allowed; }
+.collector-dashboard .badge { border-radius: 999px; font-weight: 700; }
+.collector-dashboard .notice { border-radius: 11px; }
+
+@media (max-width: 850px) {
+  .collector-dashboard > .hero { padding: 34px 22px 40px; }
+  .collector-dashboard > .hero h1 { font-size: clamp(2rem, 5vw, 2.7rem); }
+}
+@media (max-width: 600px) {
+  .collector-dashboard > .hero { padding: 30px 20px 36px; }
+  .collector-dashboard > .hero .eyebrow { margin-bottom: 10px; }
+  .collector-dashboard > .hero h1 { max-width: 100%; font-size: clamp(1.8rem, 7vw, 2.35rem); }
+  .collector-dashboard > .hero .hero-text { margin-top: 12px; font-size: .93rem; }
+  .collector-dashboard > .tabs { padding: 6px; gap: 6px; margin-bottom: 18px; }
+  .collector-dashboard > .tabs > button { flex: 1 1 auto; min-height: 40px; padding: 9px 11px; font-size: .82rem; }
+  .collector-dashboard .card { padding: 17px; border-radius: 15px; }
+  .collector-dashboard .table-wrap th,
+  .collector-dashboard .table-wrap td { padding: 10px; font-size: .82rem; }
+  .collector-dashboard .row { align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collector-dashboard > .tabs > button { transition: none; }
+}
