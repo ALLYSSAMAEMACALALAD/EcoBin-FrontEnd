@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
 import PageHero from '../components/PageHero.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function Login() {
   const { login } = useAuth();
@@ -24,6 +25,7 @@ export default function Login() {
 
   return (
     <div className="public-page">
+      <ThemeToggle floating />
       <PageHero
         eyebrow="Smart waste collection"
         title="Smarter collection. Stronger communities."
