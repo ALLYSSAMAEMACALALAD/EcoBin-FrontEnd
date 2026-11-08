@@ -1,5 +1,8 @@
 // Fetch wrapper for the LavaLust API. Sends the JWT access token and, on a 401, refreshes once and retries.
-const API_BASE = (import.meta.env.VITE_BASE_URL || '/api').replace(/\/$/, '');
+const configuredApiUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || '').trim().replace(/\/+$/, '');
+const API_BASE = configuredApiUrl
+  ? (/\/api$/i.test(configuredApiUrl) ? configuredApiUrl : `${configuredApiUrl}/api`)
+  : '/api';
 const TOKEN_KEY = 'ecobin.tokens';
 const REQUEST_TIMEOUT_MS = 60000;
 const pendingGetRequests = new Map();
