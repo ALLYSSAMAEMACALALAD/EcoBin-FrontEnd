@@ -306,39 +306,211 @@ function Tickets() {
   );
 }
 
+// ==========================================
+// USERS & STAFF (CRUD)
+// ==========================================
+
+const ROLE_OPTIONS = [['resident', 'Resident'], ['collector', 'Collector / driver'], ['admin', 'Admin']];
+const EMPTY_USER = { name: '', email: '', phone: '', barangay: '', password: '', role: 'collector' };
+
 function Users() {
   const users = useLoader(() => api('/admin/users'));
-  const blank = { name: '', email: '', phone: '', barangay: '', password: '', role: 'collector' };
-  const [form, setForm] = useState(blank);
+  const [roleFilter, setRoleFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [form, setForm] = useState(EMPTY_USER);
+  const [editing, setEditing] = useState(null); // user object being edited
+  const [editForm, setEditForm] = useState(null);
+  const [pwTarget, setPwTarget] = useState(null);
+  const [newPw, setNewPw] = useState('');
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
+  const [busy, setBusy] = useState(false);
+
+  const all = users.data?.users || [];
+  const q = search.trim().toLowerCase();
+  const visible = all.filter((u) =>
+    (!roleFilter || u.role === roleFilter) &&
+    (!q || [u.name, u.email, u.eco_id, u.barangay].some((v) => String(v || '').toLowerCase().includes(q)))
+  );
+
+  async function run(fn, okText) {
+    setBusy(true);
+    setMsg({ kind: 'info', text: '' });
+    try {
+      await fn();
+      setMsg({ kind: 'success', text: okText });
+      users.reload();
+      return true;
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message || 'May error. Subukan muli.' });
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function create(e) {
     e.preventDefault();
-    try {
-      await api('/admin/users', { method: 'POST', body: form });
-      setMsg({ kind: 'success', text: `${cap(form.role)} account created.` });
-      setForm(blank); users.reload();
-    } catch (err) { setMsg({ kind: 'error', text: err.message }); }
+    const ok = await run(
+      () => api('/admin/users', { method: 'POST', body: form }),
+      `${cap(form.role)} account created.`
+    );
+    if (ok) setForm(EMPTY_USER);
   }
+
+  function startEdit(u) {
+    setEditing(u);
+    setEditForm({
+      name: u.name || '',
+      email: u.email || '',
+      phone: u.phone || '',
+      barangay: u.barangay || '',
+      role: u.role,
+    });
+    setMsg({ kind: 'info', text: '' });
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault();
+    const ok = await run(
+      () => api(`/admin/users/${editing.id}`, { method: 'PUT', body: editForm }),
+      'User updated.'
+    );
+    if (ok) setEditing(null);
+  }
+
+  async function savePassword(e) {
+    e.preventDefault();
+    const ok = await run(
+      () => api(`/admin/users/${pwTarget.id}/password`, { method: 'PATCH', body: { password: newPw } }),
+      `Password updated for ${pwTarget.name}.`
+    );
+    if (ok) { setPwTarget(null); setNewPw(''); }
+  }
+
+  async function toggleStatus(u) {
+    const next = u.is_active === 0 || u.is_active === false ? 1 : 0;
+    await run(
+      () => api(`/admin/users/${u.id}/status`, { method: 'PATCH', body: { is_active: next } }),
+      `${u.name} ${next ? 'activated' : 'deactivated'}.`
+    );
+  }
+
+  async function remove(u) {
+    if (!confirm(`Delete ${u.name}? Hindi na ito mababawi.`)) return;
+    const ok = await run(
+      () => api(`/admin/users/${u.id}`, { method: 'DELETE' }),
+      `${u.name} deleted.`
+    );
+    if (ok && editing?.id === u.id) setEditing(null);
+  }
+
   return (
-    <div className="grid-2">
-      <Card title="Create collector or admin account">
-        <p className="muted">Residents sign up themselves. Staff accounts are created here only.</p>
-        <Notice kind={msg.kind}>{msg.text}</Notice>
-        <form className="stack" onSubmit={create}>
-          <label>Role<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-            <option value="collector">Collector / driver</option><option value="admin">Admin</option></select></label>
-          <label>Full name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
-          <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
-          <label>Temporary password (min. 8)<input type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /></label>
-          <button className="btn primary">Create account</button>
-        </form>
-      </Card>
-      <Card title="All users" actions={<button className="btn ghost" onClick={users.reload}>Refresh</button>}>
-        <Table columns={[
-          { key: 'name', label: 'Name' }, { key: 'email', label: 'Email' },
-          { key: 'role', label: 'Role', render: (r) => <span className={`badge role-${r.role}`}>{cap(r.role)}</span> },
-          { key: 'eco_id', label: 'Eco-ID' }, { key: 'barangay', label: 'Barangay' },
-        ]} rows={users.data?.users} />
+    <div className="stack">
+      <Notice kind={msg.kind}>{msg.text}</Notice>
+
+      <div className="grid-2">
+        <Card title="Create collector or admin account">
+          <p className="muted">Residents sign up themselves. Staff accounts are created here only.</p>
+          <form className="stack" onSubmit={create}>
+            <label>Role
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                <option value="collector">Collector / driver</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <label>Full name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
+            <label>Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></label>
+            <label>Phone<input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
+            <label>Barangay<input value={form.barangay} onChange={(e) => setForm({ ...form, barangay: e.target.value })} /></label>
+            <label>Temporary password (min. 8)
+              <input type="password" minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+            </label>
+            <button className="btn primary" disabled={busy}>Create account</button>
+          </form>
+        </Card>
+
+        {editing ? (
+          <Card title={`Edit: ${editing.name}`}>
+            <form className="stack" onSubmit={saveEdit}>
+              <label>Full name<input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required /></label>
+              <label>Email<input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required /></label>
+              <label>Phone<input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></label>
+              <label>Barangay<input value={editForm.barangay} onChange={(e) => setEditForm({ ...editForm, barangay: e.target.value })} /></label>
+              <label>Role
+                <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}>
+                  {ROLE_OPTIONS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                </select>
+              </label>
+              <div className="row">
+                <button className="btn primary" disabled={busy}>Save changes</button>
+                <button type="button" className="btn ghost" onClick={() => setEditing(null)}>Cancel</button>
+              </div>
+            </form>
+          </Card>
+        ) : pwTarget ? (
+          <Card title={`Reset password: ${pwTarget.name}`}>
+            <form className="stack" onSubmit={savePassword}>
+              <label>New password (min. 8)
+                <input type="password" minLength={8} value={newPw} onChange={(e) => setNewPw(e.target.value)} required />
+              </label>
+              <div className="row">
+                <button className="btn primary" disabled={busy}>Update password</button>
+                <button type="button" className="btn ghost" onClick={() => { setPwTarget(null); setNewPw(''); }}>Cancel</button>
+              </div>
+            </form>
+          </Card>
+        ) : (
+          <Card title="Edit or reset">
+            <p className="muted">Pumili ng user sa listahan para i-edit, i-reset ang password, i-activate o i-deactivate, o burahin.</p>
+          </Card>
+        )}
+      </div>
+
+      <Card
+        title="All users"
+        actions={
+          <span className="row">
+            <input placeholder="Search name, email, Eco-ID…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+              <option value="">All roles</option>
+              {ROLE_OPTIONS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select>
+            <button className="btn ghost" onClick={users.reload}>Refresh</button>
+          </span>
+        }
+      >
+        <Table
+          columns={[
+            { key: 'name', label: 'Name' },
+            { key: 'email', label: 'Email' },
+            { key: 'role', label: 'Role', render: (r) => <span className={`badge role-${r.role}`}>{cap(r.role)}</span> },
+            { key: 'eco_id', label: 'Eco-ID' },
+            { key: 'barangay', label: 'Barangay' },
+            {
+              key: 'is_active',
+              label: 'Status',
+              render: (r) => (r.is_active === 0 || r.is_active === false
+                ? <span className="badge s-rejected">Inactive</span>
+                : <span className="badge s-approved">Active</span>),
+            },
+            {
+              key: 'act',
+              label: '',
+              render: (r) => (
+                <span className="row">
+                  <button className="btn small" onClick={() => { setPwTarget(null); startEdit(r); }}>Edit</button>
+                  <button className="btn small ghost" onClick={() => { setEditing(null); setPwTarget(r); setNewPw(''); }}>Password</button>
+                  <button className="btn small ghost" onClick={() => toggleStatus(r)}>
+                    {r.is_active === 0 || r.is_active === false ? 'Activate' : 'Deactivate'}
+                  </button>
+                  <button className="btn small danger" onClick={() => remove(r)}>Delete</button>
+                </span>
+              ),
+            },
+          ]}
+          rows={visible}
+          empty="Walang user na tumutugma."
+        />
       </Card>
     </div>
   );
