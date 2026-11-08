@@ -175,3 +175,101 @@ th { color: var(--muted); font-weight: 700; font-size: .85rem; text-transform: u
   border-radius: 14px;
   overflow: hidden;
 }
+
+/* ==========================================
+   REPORTS & ANALYTICS: sidebar layout
+   ========================================== */
+.reports-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: stretch;
+  margin-top: 16px;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: #f5f7f3;
+  border-top: 1px solid #e3ebe0;
+  border-bottom: 1px solid #e3ebe0;
+  box-sizing: border-box;
+  min-height: 70vh;
+}
+
+.reports-sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e3ebe0;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.reports-sidebar-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a988a;
+  margin: 18px 12px 8px;
+}
+
+.reports-sidebar-label:first-child {
+  margin-top: 0;
+}
+
+.reports-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reports-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5d50;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.reports-menu button:hover {
+  background: #f1f6ee;
+  color: #1f3a2a;
+}
+
+.reports-menu button.active {
+  background: #1f3a2a;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(31, 58, 42, 0.18);
+}
+
+.reports-content {
+  min-width: 0;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+  .reports-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #e3ebe0;
+  }
+  .reports-content {
+    padding: 20px 16px;
+  }
+}
