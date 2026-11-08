@@ -551,6 +551,23 @@ function Rewards() {
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
+// Pinaliit ang larawan bago i-upload. Kung hindi kaya (halimbawa HEIC), ibinabalik ang orihinal.
+async function shrinkImage(file, maxSize = 1600, quality = 0.8) {
+  try {
+    const img = await createImageBitmap(file);
+    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', quality));
+    if (!blob) return file;
+    return new File([blob], 'report.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
 function ReportDumping({ onFiled }) {
   const [form, setForm] = useState({
     location: '',
