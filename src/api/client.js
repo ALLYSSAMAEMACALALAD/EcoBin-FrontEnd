@@ -1,4 +1,5 @@
 // Fetch wrapper for the LavaLust API. Sends the JWT access token and, on a 401, refreshes once and retries.
+const API_BASE = (import.meta.env.VITE_BASE_URL || '/api').replace(/\/$/, '');
 const TOKEN_KEY = 'ecobin.tokens';
 const REQUEST_TIMEOUT_MS = 60000;
 const pendingGetRequests = new Map();
@@ -40,14 +41,14 @@ async function send(path, { method = 'GET', body, headers = {} } = {}) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-  return fetchWithTimeout(`/api${path}`, opts);
+  return fetchWithTimeout(`${API_BASE}${path}`, opts);
 }
 
 /** Exchanges the refresh token for a new pair. The server rotates it, so the old one stops working. */
 async function refreshTokens() {
   const tokens = tokenStore.get();
   if (!tokens?.refresh_token) return false;
-  const res = await fetchWithTimeout('/api/auth/refresh', {
+  const res = await fetchWithTimeout(`${API_BASE}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: tokens.refresh_token }),
