@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { api, newIdempotencyKey } from '../../api/client.js';
+import { api } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
+import { compressImage } from '../../lib/image.js';
 import './CollectorHome.css';
 
 const NAV_ITEMS = [
@@ -223,7 +224,7 @@ function Overview({ onNavigate }) {
                   <div className="cd-list-main">
                     <div className="cd-list-title">Collected {cap(d.material)}</div>
                     <div className="cd-list-sub">
-                      {d.resident_name || 'Resident'} · {d.weight_kg} kg
+                      {d.resident_name || 'Resident'} · {d.unit === 'pcs' ? `${d.quantity} pcs` : `${parseFloat(d.weight_kg)} kg`}
                     </div>
                   </div>
                   <div className="cd-list-meta">
@@ -390,8 +391,26 @@ function RouteView() {
 }
 
 // ==========================================
-// LOG DROP-OFF (QR SCANNER)
+// LOG DROP-OFF (5-STEP FLOW)
 // ==========================================
+
+// Must mirror the backend config: label, unit, points per unit.
+const DROP_MATERIALS = [
+  ['plastic', 'Plastic', 'kg', 10],
+  ['plastic_bottle', 'Plastic bottles', 'pcs', 0.5],
+  ['paper', 'Paper', 'kg', 5],
+  ['cardboard', 'Cardboard & cartons', 'kg', 5],
+  ['metal', 'Scrap metal', 'kg', 20],
+  ['aluminum', 'Aluminum cans', 'kg', 15],
+  ['glass', 'Glass', 'kg', 8],
+  ['ewaste', 'E-waste', 'kg', 25],
+  ['textile', 'Textiles / tela', 'kg', 4],
+];
+const MATERIAL_MAP = Object.fromEntries(DROP_MATERIALS.map(([k, label, unit, rate]) => [k, { label, unit, rate }]));
+
+const STEPS = ['Identify resident', 'Recyclable details', 'Review & confirm', 'Credited'];
+const STAGE_INDEX = { identify: 0, details: 1, review: 2, done: 3 };
+const EMPTY_FORM = { material: 'plastic', quantity: '', hub_id: '' };
 
 // Kinukuha ang eco-ID mula sa QR. Tinatanggap ang raw ID o URL na may ECO-XXXX sa loob.
 function extractEcoId(text) {
@@ -399,26 +418,117 @@ function extractEcoId(text) {
   return (m ? m[0] : String(text)).trim().toUpperCase();
 }
 
+// Unique reference para sa buong collection. Ito ang ginagamit na duplicate key.
+function newTransactionId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `TX-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`.toUpperCase();
+}
+
+function Stepper({ stage }) {
+  const current = STAGE_INDEX[stage];
+  return (
+    <ol className="dp-steps">
+      {STEPS.map((label, i) => (
+        <li key={label} className={i < current ? 'done' : i === current ? 'active' : ''}>
+          <span className="dp-step-dot">{i < current ? '✓' : i + 1}</span>
+          <span className="dp-step-label">{label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function LogDropoff() {
   const hubs = useLoader(() => api('/hubs'));
-  const [form, setForm] = useState({ eco_id: '', material: 'plastic', weight_kg: '', hub_id: '' });
+  const [stage, setStage] = useState('identify');
+  const [eco, setEco] = useState('');
   const [resident, setResident] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [txId, setTxId] = useState(null);
+  const [result, setResult] = useState(null);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const photoInputRef = useRef(null);
   const scannerRef = useRef(null);
+  const submittingRef = useRef(false); // guard laban sa double submit sa loob ng iisang render
 
-  async function lookup(raw = form.eco_id) {
-    const id = extractEcoId(raw);
+  const active = MATERIAL_MAP[form.material] || MATERIAL_MAP.plastic;
+  const qty = Number(form.quantity);
+  const validQty = form.quantity !== '' && Number.isFinite(qty) && qty > 0;
+  const estimated = validQty ? Math.round(qty * active.rate * 100) / 100 : 0;
+  const hubName = (hubs.data?.hubs || []).find((h) => String(h.id) === String(form.hub_id))?.name || '—';
+
+  function fail(text) { setMsg({ kind: 'error', text }); }
+  function clearMsg() { setMsg({ kind: 'info', text: '' }); }
+
+  // Kapag nagbago ang details, bagong transaction ID ang kailangan
+  function updateForm(patch) {
+    setForm((f) => ({ ...f, ...patch }));
+    setTxId(null);
+  }
+
+  function clearPhoto() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhoto(null);
+    setPhotoPreview('');
+    setTxId(null);
+  }
+
+  async function onPhotoPick(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // payagan ang pag-repick ng parehong file
+    if (!file) return;
+    // Phone cameras produce multi-megabyte photos; shrink before uploading.
+    const compressed = await compressImage(file);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(compressed.type)) {
+      fail('Hindi ma-read ng browser ang larawan. I-save o i-convert bilang JPEG/PNG at subukan ulit.');
+      return;
+    }
+    if (compressed.size > 5 * 1024 * 1024) { fail('Photo must be 5 MB or smaller.'); return; }
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhoto(compressed);
+    setPhotoPreview(URL.createObjectURL(compressed));
+    setTxId(null); // bagong detalye, bagong transaction ID
+    clearMsg();
+  }
+
+  function resetAll() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhoto(null);
+    setPhotoPreview('');
+    setEco('');
+    setResident(null);
+    setForm(EMPTY_FORM);
+    setTxId(null);
+    setResult(null);
+    setStage('identify');
+    clearMsg();
+  }
+
+  // Step 1 at 2: kilalanin ang resident at i-verify na registered at active ang account
+  async function verifyResident(raw) {
+    const id = extractEcoId(raw ?? eco);
     if (!id) return;
-    setMsg({ kind: 'info', text: '' });
+    setBusy(true);
+    clearMsg();
     try {
       const d = await api(`/dropoffs/lookup/${encodeURIComponent(id)}`);
-      setResident(d.resident);
-      setForm((f) => ({ ...f, eco_id: id }));
+      const r = d.resident;
+      if (!r) throw new Error('Resident not found.');
+      if (r.is_active === false || r.is_active === 0) {
+        throw new Error('This resident account is inactive. Transaction blocked.');
+      }
+      setEco(id);
+      setResident(r);
+      setStage('details');
     } catch (e) {
       setResident(null);
-      setMsg({ kind: 'error', text: e.message });
+      fail(e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -442,105 +552,245 @@ function LogDropoff() {
       async (text) => {
         if (!scannerRef.current) return; // guard laban sa sunod-sunod na scan
         await stopScanner();
-        const id = extractEcoId(text);
-        setForm((f) => ({ ...f, eco_id: id }));
-        lookup(id);
+        verifyResident(text);
       },
       () => {} // balewalain ang frames na walang QR
-    ).catch((e) => {
-      setMsg({ kind: 'error', text: `Hindi mabuksan ang camera. Siguraduhing may permission ka at HTTPS ang site. (${e})` });
+    ).catch(() => {
+      fail('Hindi mabuksan ang camera. Siguraduhing may permission ka at HTTPS ang site.');
       setScanning(false);
     });
     return () => { stopScanner(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanning]);
 
-  async function submit(e) {
+  // Step 3: gumawa ng transaction ID at ipakita ang review; server ang nagche-check ng duplicate sa confirm.
+  function goToReview(e) {
     e.preventDefault();
+    if (busy) return;
+    if (!validQty) {
+      fail('Enter a valid quantity.');
+      return;
+    }
+    if (!photo) {
+      fail('Take a photo of the recyclables before continuing.');
+      return;
+    }
+    clearMsg();
+    setTxId(txId || newTransactionId());
+    setStage('review');
+  }
+
+  // Step 5 at 6: kumpirmahin at i-credit ang points. Ang server ang nagkakalkula at nag-e-enforce ng uniqueness.
+  async function confirmCollection() {
+    if (submittingRef.current || !txId) return;
+    submittingRef.current = true;
     setBusy(true);
-    setMsg({ kind: 'info', text: '' });
+    clearMsg();
     try {
-      // One key per submission attempt: a double-click or network retry reuses the key and cannot double-credit.
-      const key = form.idemKey || newIdempotencyKey();
-      setForm((f) => ({ ...f, idemKey: key }));
+      const fd = new FormData();
+      fd.append('transaction_id', txId);
+      fd.append('eco_id', eco);
+      fd.append('material', form.material);
+      fd.append('quantity', String(qty));
+      fd.append('hub_id', form.hub_id || '');
+      fd.append('photo', photo);
+
       const d = await api('/dropoffs', {
         method: 'POST',
-        body: { ...form, weight_kg: Number(form.weight_kg) },
-        headers: { 'Idempotency-Key': key },
+        headers: { 'Idempotency-Key': txId },
+        body: fd,
       });
-      setMsg({ kind: 'success', text: `Credited ${d.points} points to ${d.resident}. New balance: ${d.balance}.` });
-      setForm({ eco_id: '', material: 'plastic', weight_kg: '', hub_id: '' });
-      setResident(null);
+      setResult({
+        txId,
+        points: d.points,
+        balance: d.balance,
+        resident: d.resident ?? resident?.name ?? eco,
+      });
+      setStage('done');
     } catch (err) {
-      if (err.status === 409) setMsg({ kind: 'error', text: 'This drop-off was already credited. No points were added twice.' });
-      else setMsg({ kind: 'error', text: err.message });
+      if (err.status === 409) {
+        setTxId(null);
+        fail('Transaction already exists! Points were not added twice. Please start a new collection.');
+        setStage('details');
+      } else {
+        fail(err.message);
+      }
     } finally {
+      submittingRef.current = false;
       setBusy(false);
     }
   }
 
   return (
-    <Card title="Log a recyclable drop-off">
+    <Card title="Log a recyclable collection">
+      <Stepper stage={stage} />
       <Notice kind={msg.kind}>{msg.text}</Notice>
 
-      <div className="row">
-        <label className="grow">
-          Resident eco-ID (scan or type)
-          <input
-            value={form.eco_id}
-            onChange={(e) => setForm({ ...form, eco_id: e.target.value })}
-            placeholder="ECO-XXXXXXXX"
-          />
-        </label>
-        <button type="button" className="btn ghost" onClick={() => lookup()} disabled={!form.eco_id}>Look up</button>
-        <button type="button" className="btn ghost" onClick={() => setScanning((s) => !s)}>
-          {scanning ? 'Stop scan' : 'Scan QR'}
-        </button>
-      </div>
-
-      {scanning && <div id="qr-reader" className="qr-box" />}
-
-      {resident && (
-        <p className="notice info">
-          Resident: <strong>{resident.name}</strong> · balance {resident.balance} pts
-        </p>
+      {/* STEP 1: Scan / identify resident */}
+      {stage === 'identify' && (
+        <div className="dp-stage">
+          <h3>Scan the resident's QR code</h3>
+          <div className="dropoff-scan-row">
+            <label className="grow">
+              Resident eco-ID (scan or type)
+              <input
+                value={eco}
+                onChange={(e) => setEco(e.target.value)}
+                placeholder="ECO-XXXXXXXX"
+                autoComplete="off"
+              />
+            </label>
+            <div className="dropoff-scan-actions">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => verifyResident()}
+                disabled={busy || !eco}
+              >
+                {busy ? 'Verifying…' : 'Verify resident'}
+              </button>
+              <button type="button" className="btn ghost" onClick={() => setScanning((s) => !s)}>
+                {scanning ? 'Stop scan' : 'Scan QR'}
+              </button>
+            </div>
+          </div>
+          {scanning && <div id="qr-reader" className="qr-box" />}
+        </div>
       )}
 
-      <form className="stack" onSubmit={submit}>
-        <label>
-          Material
-          <select value={form.material} onChange={(e) => setForm({ ...form, material: e.target.value })}>
-            <option value="plastic">Plastic (10 pts/kg)</option>
-            <option value="paper">Paper (5 pts/kg)</option>
-            <option value="metal">Metal (20 pts/kg)</option>
-            <option value="glass">Glass (8 pts/kg)</option>
-          </select>
-        </label>
+      {/* STEP 2: Recyclable details */}
+      {stage === 'details' && resident && (
+        <form className="dropoff-form" onSubmit={goToReview}>
+          <p className="notice info dropoff-resident">
+            <span>Resident</span>
+            <strong>{resident.name}</strong>
+            <span className="dropoff-balance">Balance {resident.balance} pts</span>
+          </p>
 
-        <label>
-          Weight (kg)
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={form.weight_kg}
-            onChange={(e) => setForm({ ...form, weight_kg: e.target.value })}
-            required
-          />
-        </label>
+          <div className="dropoff-grid">
+            <label>
+              Material
+              <select value={form.material} onChange={(e) => updateForm({ material: e.target.value, quantity: '' })}>
+                {DROP_MATERIALS.map(([k, label, unit, rate]) => (
+                  <option key={k} value={k}>
+                    {label} ({unit === 'pcs' ? `${rate} pt/piece` : `${rate} pts/kg`})
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label>
-          Drop-off hub
-          <select value={form.hub_id} onChange={(e) => setForm({ ...form, hub_id: e.target.value })}>
-            <option value="">—</option>
-            {(hubs.data?.hubs || []).map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-          </select>
-        </label>
+            <label>
+              {active.unit === 'pcs' ? 'How many pieces?' : 'Weight (kg)'}
+              <input
+                type="number"
+                step={active.unit === 'pcs' ? '1' : '0.01'}
+                min={active.unit === 'pcs' ? '1' : '0.01'}
+                inputMode={active.unit === 'pcs' ? 'numeric' : 'decimal'}
+                placeholder={active.unit === 'pcs' ? 'e.g. 24 bottles' : 'e.g. 3.5'}
+                value={form.quantity}
+                onChange={(e) => updateForm({ quantity: e.target.value })}
+                required
+              />
+            </label>
 
-        <button className="btn primary" disabled={busy || !form.eco_id}>
-          {busy ? 'Crediting…' : 'Credit points'}
-        </button>
-      </form>
+            <label className="dropoff-span-2">
+              Drop-off hub
+              <select value={form.hub_id} onChange={(e) => updateForm({ hub_id: e.target.value })}>
+                <option value="">—</option>
+                {(hubs.data?.hubs || []).map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="dropoff-preview">
+            <span>{active.label} — {active.unit === 'pcs' ? '0.5 pt per piece' : `${active.rate} pts per kg`}</span>
+            <strong>Estimated: {estimated.toLocaleString(undefined, { maximumFractionDigits: 2 })} pts</strong>
+          </div>
+
+          {/* Step 3 (photo): required before the collector can proceed */}
+          <div className="dropoff-photo-block">
+            <span className="dropoff-photo-label">Photo of the recyclables <em>(required)</em></span>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={onPhotoPick}
+            />
+            {!photoPreview ? (
+              <button type="button" className="dropoff-photo-btn" onClick={() => photoInputRef.current?.click()}>
+                <span className="dropoff-photo-icon">📷</span>
+                <span className="dropoff-photo-title">Take a photo</span>
+                <small>The camera opens on your phone, or pick a file</small>
+              </button>
+            ) : (
+              <div className="dropoff-photo-preview">
+                <img src={photoPreview} alt="Recyclables to be collected" />
+                <div className="dropoff-photo-meta">
+                  <strong>{photo?.name && photo.name.length > 42 ? `…${photo.name.slice(-42)}` : photo?.name}</strong>
+                  <small>{photo ? `${Math.max(1, Math.round(photo.size / 1024))} KB · image ready` : ''}</small>
+                  <button type="button" className="btn ghost small" onClick={clearPhoto}>Retake photo</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="dropoff-actions">
+            <button type="button" className="btn ghost" onClick={resetAll} disabled={busy}>Cancel</button>
+            <button className="btn primary" disabled={busy || !validQty || !photo}>
+              {busy ? 'Checking…' : 'Continue to review'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* STEP 3: Review and confirm */}
+      {stage === 'review' && resident && (
+        <div className="dp-stage">
+          <dl className="dp-summary">
+            <div><dt>Resident</dt><dd>{resident.name}</dd></div>
+            <div><dt>Material</dt><dd>{active.label}</dd></div>
+            <div><dt>Quantity</dt><dd>{active.unit === 'pcs' ? `${qty} pcs` : `${qty} kg`}</dd></div>
+            <div><dt>Hub</dt><dd>{hubName}</dd></div>
+            <div><dt>Points to credit</dt><dd>{estimated.toLocaleString(undefined, { maximumFractionDigits: 2 })}</dd></div>
+            <div><dt>Photo</dt><dd>{photoPreview ? <img className="dp-photo-thumb" src={photoPreview} alt="Recyclables" /> : '—'}</dd></div>
+          </dl>
+
+          <div className="dp-txid">
+            <span>Transaction ID</span>
+            <code>{txId}</code>
+          </div>
+
+          <div className="dropoff-actions">
+            <button type="button" className="btn ghost" onClick={() => setStage('details')} disabled={busy}>
+              Edit details
+            </button>
+            <button type="button" className="btn primary" onClick={confirmCollection} disabled={busy}>
+              {busy ? 'Crediting…' : 'Confirm & credit points'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: Credited */}
+      {stage === 'done' && result && (
+        <div className="dp-result">
+          <div className="dp-result-icon">✓</div>
+          <h3>Points credited</h3>
+          <p>
+            {result.points} pts credited to <strong>{result.resident}</strong>.
+            New balance: {result.balance} pts.
+          </p>
+          <div className="dp-txid">
+            <span>Transaction ID</span>
+            <code>{result.txId}</code>
+          </div>
+          <button type="button" className="btn primary" onClick={resetAll}>
+            Log another collection
+          </button>
+        </div>
+      )}
     </Card>
   );
 }
@@ -557,9 +807,10 @@ function History() {
         columns={[
           { key: 'created_at', label: 'When', render: (r) => fmtDate(r.created_at) },
           { key: 'resident_name', label: 'Resident' },
-          { key: 'material', label: 'Material', render: (r) => cap(r.material) },
-          { key: 'weight_kg', label: 'kg' },
-          { key: 'points', label: 'Points' },
+          { key: 'material', label: 'Material', render: (r) => (r.unit === 'pcs' ? 'Plastic bottles' : cap(r.material)) },
+          { key: 'qty', label: 'Qty', render: (r) => r.unit === 'pcs' ? `${r.quantity} pcs` : `${parseFloat(r.quantity ?? r.weight_kg)} kg` },
+          { key: 'points', label: 'Points', render: (r) => Number(r.points) },
+          { key: 'photo', label: 'Photo', render: (r) => (r.photo_url ? <img className="table-thumb" src={r.photo_url} alt="Recyclables" /> : '—') },
         ]}
         rows={drops.data?.dropoffs}
       />

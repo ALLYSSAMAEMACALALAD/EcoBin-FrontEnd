@@ -11,6 +11,7 @@ import {
   cap
 } from '../../components/ui.jsx';
 import { downloadCertificate } from '../../lib/certificate.js';
+import { compressImage } from '../../lib/image.js';
 import './ResidentHome.css';
 
 // ==========================================
@@ -355,7 +356,7 @@ function Overview({ onNavigate }) {
                   <span className="rd-dot" />
                   <div>
                     <div className="rd-activity-text">
-                      You earned {d.points} pts for a {cap(d.material)} drop-off ({d.weight_kg} kg)
+                      You earned {d.points} pts for a {cap(d.material)} drop-off ({d.unit === 'pcs' ? `${d.quantity} pcs` : `${parseFloat(d.weight_kg)} kg`})
                     </div>
                     <div className="rd-activity-date">{fmtDate(d.created_at)}</div>
                   </div>
@@ -388,8 +389,9 @@ function Overview({ onNavigate }) {
           columns={[
             { key: 'created_at', label: 'Date', render: (r) => fmtDate(r.created_at) },
             { key: 'material', label: 'Material', render: (r) => cap(r.material) },
-            { key: 'weight_kg', label: 'kg' },
-            { key: 'points', label: 'Points' }
+            { key: 'qty', label: 'Qty', render: (r) => (r.unit === 'pcs' ? `${r.quantity} pcs` : `${parseFloat(r.quantity ?? r.weight_kg)} kg`) },
+            { key: 'points', label: 'Points', render: (r) => Number(r.points) },
+            { key: 'photo', label: 'Photo', render: (r) => (r.photo_url ? <img className="table-thumb" src={r.photo_url} alt="Recyclables" /> : '—') }
           ]}
           rows={dropRows.slice(0, 8)}
           empty="No drop-offs yet. Bring your sorted recyclables to a hub."
@@ -757,7 +759,6 @@ downloadCertificate(d.certificate);
 // REPORT DUMPING
 // ==========================================
 
-const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // Pinaliit ang larawan bago i-upload. Kung hindi kaya (halimbawa HEIC), ibinabalik ang orihinal.
@@ -805,18 +806,22 @@ function ReportDumping({ onFiled }) {
     return () => URL.revokeObjectURL(url);
   }, [photo]);
 
-  function pickPhoto(file) {
+  async function pickPhoto(file) {
     if (!file) return;
 
-    if (file.type && !ALLOWED_PHOTO_TYPES.includes(file.type)) {
+    setMsg({ kind: 'info', text: '' });
+    // Phone cameras produce multi-megabyte photos; shrink before uploading.
+    const compressed = await compressImage(file);
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(compressed.type)) {
       setMsg({
         kind: 'error',
-        text: 'Gamitin ang JPEG, PNG, o WebP lang.'
+        text: 'Hindi ma-read ng browser ang larawan. I-save o i-convert bilang JPEG/PNG at subukan ulit.'
       });
       return;
     }
 
-    if (file.size > MAX_PHOTO_BYTES) {
+    if (compressed.size > MAX_PHOTO_BYTES) {
       setMsg({
         kind: 'error',
         text: 'Masyadong malaki ang larawan. Max 5 MB.'
@@ -824,8 +829,7 @@ function ReportDumping({ onFiled }) {
       return;
     }
 
-    setMsg({ kind: 'info', text: '' });
-    setPhoto(file);
+    setPhoto(compressed);
   }
 
   async function submit(e) {
@@ -953,7 +957,7 @@ function ReportDumping({ onFiled }) {
             </button>
           </div>
 
-          {preview && (
+          {preview && photo && (
             <div className="stack">
               <img
                 src={preview}
