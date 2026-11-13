@@ -205,6 +205,14 @@
   cursor: pointer;
 }
 
+.lg-forgot {
+  margin: -4px 2px 2px;
+  text-align: right;
+  font-size: 15px;
+}
+
+.lg-forgot .lg-link { font-weight: 600; }
+
 .lg-link {
   color: var(--green-700);
   font-weight: 600;

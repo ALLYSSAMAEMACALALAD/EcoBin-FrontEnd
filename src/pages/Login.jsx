@@ -115,6 +115,13 @@ export default function Login() {
               </button>
             </div>
 
+            {/* Forgot password */}
+            <p className="lg-forgot">
+              <Link className="lg-link" to="/forgot-password">
+                Forgot password?
+              </Link>
+            </p>
+
             {/* Login Button */}
             <button
               className="lg-btn-primary"
