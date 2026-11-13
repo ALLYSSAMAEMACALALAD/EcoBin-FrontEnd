@@ -1702,6 +1702,7 @@ function ReportsHub() {
   };
 
   const tables = buildTables(data, filters);
+  const barangayOptions = [...new Set(data.residentList.map((r) => r.barangay).filter(Boolean))].sort();
   const setFilter = (k) => (e) => setFilters({ ...filters, [k]: e.target.value });
 
   function renderContent() {
@@ -1725,19 +1726,31 @@ function ReportsHub() {
 
   return (
     <>
-      <Card title="Report filters">
-        <div className="row wrap">
+      <Card
+        title="Report filters"
+        actions={(
+          <button type="button" className="btn ghost small" onClick={() => setFilters(EMPTY_FILTERS)}>
+            Clear filters
+          </button>
+        )}
+      >
+        <div className="reports-filters">
           <label>From<input type="date" value={filters.from} onChange={setFilter('from')} /></label>
           <label>To<input type="date" value={filters.to} onChange={setFilter('to')} /></label>
-          <label>Barangay<input value={filters.barangay} onChange={setFilter('barangay')} placeholder="All" /></label>
+          <label>Barangay
+            <select value={filters.barangay} onChange={setFilter('barangay')}>
+              <option value="">All barangays</option>
+              {barangayOptions.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </label>
           <label>Waste category
             <select value={filters.category} onChange={setFilter('category')}>
-              <option value="">All</option>
+              <option value="">All categories</option>
               {WASTE_CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{cap(c)}</option>)}
             </select></label>
           <label>Status
             <select value={filters.status} onChange={setFilter('status')}>
-              <option value="">All</option>
+              <option value="">All statuses</option>
               {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{cap(s)}</option>)}
             </select></label>
           <label>Driver
@@ -1745,7 +1758,6 @@ function ReportsHub() {
               <option value="">All drivers</option>
               {data.collectorList.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select></label>
-          <button type="button" className="btn ghost" onClick={() => setFilters(EMPTY_FILTERS)}>Clear filters</button>
         </div>
       </Card>
 
@@ -1850,37 +1862,60 @@ function ReportGenerate({ data, filters, onSaved }) {
   }
 
   return (
-    <Card title="Generate report">
+    <Card
+      title="Generate report"
+      actions={(
+        <span className="row">
+          <button
+            type="button"
+            className="btn ghost small"
+            onClick={() => setCats(REPORT_SECTIONS.map(([k]) => k))}
+          >
+            Select all
+          </button>
+          <button type="button" className="btn ghost small" onClick={() => setCats([])}>
+            Clear
+          </button>
+        </span>
+      )}
+    >
       <Notice kind={msg.kind}>{msg.text}</Notice>
 
       <p className="muted">The filters above are applied to the report. The period sets the date range.</p>
 
-      <div className="stack">
-        <span>Categories</span>
-        <div className="row wrap">
-          {REPORT_SECTIONS.map(([k, label]) => (
-            <label key={k} className="row">
-              <input type="checkbox" checked={cats.includes(k)} onChange={() => toggle(k)} />
-              {label}
-            </label>
-          ))}
+      <div className="report-gen">
+        <div className="report-gen-block">
+          <div className="report-gen-head">
+            <strong>Categories</strong>
+            <span className="muted">{cats.length} of {REPORT_SECTIONS.length} selected</span>
+          </div>
+          <div className="report-gen-cats">
+            {REPORT_SECTIONS.map(([k, label]) => (
+              <label key={k} className="report-gen-cat">
+                <input type="checkbox" checked={cats.includes(k)} onChange={() => toggle(k)} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="report-gen-options">
+          <label>Period
+            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+              {PERIODS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select></label>
+          <label>Format
+            <select value={format} onChange={(e) => setFormat(e.target.value)}>
+              {FORMATS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select></label>
+        </div>
+
+        <div className="report-gen-actions">
+          <button className="btn primary" type="button" disabled={busy} onClick={generate}>
+            {busy ? 'Saving…' : 'Generate & download'}
+          </button>
         </div>
       </div>
-
-      <div className="row wrap">
-        <label>Period
-          <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-            {PERIODS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select></label>
-        <label>Format
-          <select value={format} onChange={(e) => setFormat(e.target.value)}>
-            {FORMATS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select></label>
-      </div>
-
-      <button className="btn primary" type="button" disabled={busy} onClick={generate}>
-        {busy ? 'Saving…' : 'Generate & download'}
-      </button>
     </Card>
   );
 }
