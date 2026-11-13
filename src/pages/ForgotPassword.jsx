@@ -91,12 +91,12 @@ export default function ForgotPassword() {
     setBusy(true);
     setMsg({ kind: 'info', text: '' });
     try {
-      const d = await api('/auth/forgot-password', { method: 'POST', body: { email } });
+      await api('/auth/forgot-password', { method: 'POST', body: { email } });
       setDigits(emptyDigits());
       setStep('code');
       setMsg({
         kind: 'success',
-        text: d.message || 'If an account exists for this email, a 6-digit code has been sent.',
+        text: 'If an account exists for this email, a 6-digit code has been sent.',
       });
     } catch (err) {
       setMsg({ kind: 'error', text: `Could not send the code: ${err.message}` });

@@ -1,9 +1,9 @@
 /* ==========================================
-   FORGOT PASSWORD PAGE (split card)
+   LOGIN PAGE (split card)
    Gumagamit ng variables mula sa global stylesheet (:root)
    ========================================== */
 
-.fp-page {
+.lg-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -13,7 +13,7 @@
   box-sizing: border-box;
 }
 
-.fp-card {
+.lg-card {
   width: min(960px, 100%);
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -25,7 +25,7 @@
 }
 
 /* ---------- Left panel ---------- */
-.fp-left {
+.lg-left {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -38,7 +38,7 @@
   box-sizing: border-box;
 }
 
-.fp-logo-mark {
+.lg-logo-mark {
   width: 96px;
   height: 96px;
   border-radius: 50%;
@@ -50,7 +50,7 @@
   box-shadow: 0 10px 24px rgba(23, 49, 31, 0.2);
 }
 
-.fp-brand {
+.lg-brand {
   margin-top: 16px;
   font-size: 44px;
   font-weight: 800;
@@ -59,21 +59,21 @@
   line-height: 1;
 }
 
-.fp-tag {
+.lg-tag {
   margin: 10px 0 0;
   font-size: 16px;
   font-style: italic;
   color: var(--green-700);
 }
 
-.fp-mascot {
+.lg-mascot {
   margin-top: auto;
   font-size: 150px;
   line-height: 1;
   filter: drop-shadow(0 12px 20px rgba(23, 49, 31, 0.2));
 }
 
-.fp-banner {
+.lg-banner {
   margin-top: 18px;
   width: 100%;
   display: flex;
@@ -90,10 +90,10 @@
   box-sizing: border-box;
 }
 
-.fp-banner-icon { font-size: 22px; }
+.lg-banner-icon { font-size: 22px; }
 
 /* ---------- Right panel ---------- */
-.fp-right {
+.lg-right {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -101,9 +101,9 @@
   box-sizing: border-box;
 }
 
-.fp-title {
+.lg-title {
   margin: 0;
-  font-size: 34px;
+  font-size: 36px;
   font-weight: 800;
   color: var(--green-900);
   letter-spacing: -0.02em;
@@ -112,18 +112,17 @@
   gap: 10px;
 }
 
-.fp-leaf { font-size: 24px; }
+.lg-leaf { font-size: 26px; }
 
-.fp-sub {
-  margin: 8px 0 22px;
+.lg-sub {
+  margin: 8px 0 26px;
   font-size: 16px;
   color: var(--ink-soft);
 }
 
-.fp-form { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.lg-form { display: flex; flex-direction: column; gap: 14px; }
 
-/* ---------- Inputs ---------- */
-.fp-field {
+.lg-field {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -136,13 +135,13 @@
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.fp-field:focus-within {
+.lg-field:focus-within {
   background: #fff;
   border-color: var(--green-600);
   box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.15);
 }
 
-.fp-field-icon {
+.lg-field-icon {
   width: 22px;
   text-align: center;
   font-size: 18px;
@@ -150,7 +149,7 @@
   flex-shrink: 0;
 }
 
-.fp-field input {
+.lg-field input {
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -163,10 +162,14 @@
   color: var(--ink);
 }
 
-.fp-field input:focus { outline: none; border: 0; }
-.fp-field input::placeholder { color: #8a978d; }
+.lg-field input:focus {
+  outline: none;
+  border: 0;
+}
 
-.fp-eye {
+.lg-field input::placeholder { color: #8a978d; }
+
+.lg-eye {
   background: none;
   border: 0;
   padding: 4px;
@@ -176,39 +179,49 @@
   flex-shrink: 0;
 }
 
-/* ---------- 6-digit code boxes ---------- */
-.fp-otp {
+.lg-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  margin: 2px 2px 4px;
+  font-size: 15px;
+}
+
+.lg-remember {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin: 6px 0 4px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.fp-otp-box {
-  width: 100%;
-  max-width: 62px;
-  height: 66px;
-  padding: 0;
-  text-align: center;
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--green-900);
-  background: #f4f6f1;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+.lg-remember input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--green-700);
+  cursor: pointer;
 }
 
-.fp-otp-box:focus {
-  background: #fff;
-  border-color: var(--green-600);
-  box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.15);
+.lg-forgot {
+  margin: -4px 2px 2px;
+  text-align: right;
+  font-size: 15px;
 }
 
-/* ---------- Buttons ---------- */
-.fp-btn-primary {
+.lg-forgot .lg-link { font-weight: 600; }
+
+.lg-link {
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lg-link:hover { text-decoration: underline; }
+
+.lg-btn-primary {
   margin-top: 6px;
   height: 56px;
   width: 100%;
@@ -228,44 +241,22 @@
   transition: background 0.15s ease, transform 0.05s ease;
 }
 
-.fp-btn-primary:hover { background: var(--green-950); }
-.fp-btn-primary:active { transform: translateY(1px); }
-.fp-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.lg-btn-primary:hover { background: var(--green-950); }
+.lg-btn-primary:active { transform: translateY(1px); }
+.lg-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ---------- Footer links ---------- */
-.fp-footer {
-  margin: 16px 0 0;
+.lg-footer {
+  margin: 14px 0 0;
   text-align: center;
   font-size: 15px;
   color: var(--ink-soft);
 }
 
-.fp-link {
-  color: var(--green-700);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.fp-link:hover { text-decoration: underline; }
-
-.fp-link-btn {
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  font-weight: 600;
-  color: var(--green-700);
-  cursor: pointer;
-}
-
-.fp-link-btn:hover { text-decoration: underline; }
-
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
-  .fp-card { grid-template-columns: 1fr; }
-  .fp-left { min-height: auto; padding: 32px 24px 24px; }
-  .fp-mascot { font-size: 110px; margin-top: 16px; }
-  .fp-right { padding: 32px 24px 36px; }
-  .fp-title { font-size: 28px; }
-  .fp-otp-box { height: 56px; font-size: 22px; }
+  .lg-card { grid-template-columns: 1fr; }
+  .lg-left { min-height: auto; padding: 32px 24px 24px; }
+  .lg-mascot { font-size: 110px; margin-top: 16px; }
+  .lg-right { padding: 32px 24px 36px; }
+  .lg-title { font-size: 28px; }
 }
