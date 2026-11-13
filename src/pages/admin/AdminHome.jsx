@@ -1920,6 +1920,33 @@ function ReportGenerate({ data, filters, onSaved }) {
   );
 }
 
+function reportDateParts(v) {
+  if (!v) return { date: '—', time: '' };
+  const d = new Date(String(v).replace(' ', 'T'));
+  if (Number.isNaN(d.getTime())) return { date: String(v), time: '' };
+  return {
+    date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
+  };
+}
+
+function reportRange(from, to) {
+  if (!from || !to) return `${from || '—'} – ${to || '—'}`;
+  const f = new Date(`${from}T00:00:00`);
+  const t = new Date(`${to}T00:00:00`);
+  if (Number.isNaN(f.getTime()) || Number.isNaN(t.getTime())) return `${from} – ${to}`;
+
+  const mf = f.toLocaleDateString(undefined, { month: 'short' });
+  const mt = t.toLocaleDateString(undefined, { month: 'short' });
+  if (f.getFullYear() === t.getFullYear()) {
+    if (f.getMonth() === t.getMonth()) {
+      return `${mf} ${f.getDate()}–${t.getDate()}, ${t.getFullYear()}`;
+    }
+    return `${mf} ${f.getDate()} – ${mt} ${t.getDate()}, ${t.getFullYear()}`;
+  }
+  return `${mf} ${f.getDate()}, ${f.getFullYear()} – ${mt} ${t.getDate()}, ${t.getFullYear()}`;
+}
+
 function ReportHistory({ history }) {
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const list = history.data?.reports || [];
@@ -1941,23 +1968,50 @@ function ReportHistory({ history }) {
   }
 
   return (
-    <Card title="Report history" actions={<button className="btn ghost" onClick={history.reload}>Refresh</button>}>
+    <Card title="Report history" actions={<button className="btn ghost small" onClick={history.reload}>Refresh</button>}>
       <Notice kind={msg.kind}>{msg.text}</Notice>
-      <Table
-        columns={[
-          { key: 'created_at', label: 'Generated', render: (r) => fmtDate(r.created_at) },
-          { key: 'title', label: 'Title' },
-          { key: 'range', label: 'Range', render: (r) => `${r.from} to ${r.to}` },
-          { key: 'format', label: 'Format', render: (r) => (r.format === 'excel' ? 'Excel (CSV)' : 'PDF') },
-          { key: 'act', label: '', render: (r) => (
-            <span className="row">
-              <button className="btn small" onClick={() => pdf(r)}>Download PDF</button>
-              <button className="btn small ghost" onClick={() => csv(r)}>Download CSV</button>
-            </span>) },
-        ]}
-        rows={list}
-        empty="No reports generated yet."
-      />
+      <div className="report-history">
+        <Table
+          columns={[
+            {
+              key: 'created_at',
+              label: 'Generated',
+              render: (r) => {
+                const { date, time } = reportDateParts(r.created_at);
+                return (
+                  <span className="report-date">
+                    <span>{date}</span>
+                    {time && <small>{time}</small>}
+                  </span>
+                );
+              },
+            },
+            { key: 'title', label: 'Title' },
+            { key: 'range', label: 'Range', render: (r) => <span className="report-range">{reportRange(r.from, r.to)}</span> },
+            {
+              key: 'format',
+              label: 'Format',
+              render: (r) => (
+                <span className={`badge ${r.format === 'excel' ? 's-resolved' : 's-investigating'}`}>
+                  {r.format === 'excel' ? 'Excel (CSV)' : 'PDF'}
+                </span>
+              ),
+            },
+            {
+              key: 'act',
+              label: '',
+              render: (r) => (
+                <span className="report-actions">
+                  <button className="btn small" title="Download PDF" onClick={() => pdf(r)}>PDF</button>
+                  <button className="btn small ghost" title="Download CSV" onClick={() => csv(r)}>CSV</button>
+                </span>
+              ),
+            },
+          ]}
+          rows={list}
+          empty="No reports generated yet."
+        />
+      </div>
     </Card>
   );
 }

@@ -377,6 +377,52 @@ th { color: var(--muted); font-weight: 700; font-size: .85rem; text-transform: u
   padding-top: 4px;
 }
 
+/* Report history table */
+.report-history table {
+  min-width: 620px;
+}
+
+.report-history th,
+.report-history td {
+  padding: 12px 14px;
+}
+
+.report-history th:first-child,
+.report-history td:first-child {
+  padding-left: 2px;
+}
+
+.report-history tbody tr:hover {
+  background: #f8fbf6;
+}
+
+.report-date {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.report-date small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.report-range {
+  white-space: nowrap;
+}
+
+.report-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.report-actions .btn {
+  padding: 7px 14px;
+  font-size: 0.82rem;
+}
+
 @media (max-width: 800px) {
   .reports-layout {
     grid-template-columns: 1fr;
