@@ -1,9 +1,9 @@
 /* ==========================================
-   LOGIN PAGE (split card)
+   FORGOT PASSWORD PAGE (split card)
    Gumagamit ng variables mula sa global stylesheet (:root)
    ========================================== */
 
-.lg-page {
+.fp-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -13,7 +13,7 @@
   box-sizing: border-box;
 }
 
-.lg-card {
+.fp-card {
   width: min(960px, 100%);
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -25,7 +25,7 @@
 }
 
 /* ---------- Left panel ---------- */
-.lg-left {
+.fp-left {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -38,7 +38,7 @@
   box-sizing: border-box;
 }
 
-.lg-logo-mark {
+.fp-logo-mark {
   width: 96px;
   height: 96px;
   border-radius: 50%;
@@ -50,7 +50,7 @@
   box-shadow: 0 10px 24px rgba(23, 49, 31, 0.2);
 }
 
-.lg-brand {
+.fp-brand {
   margin-top: 16px;
   font-size: 44px;
   font-weight: 800;
@@ -59,21 +59,21 @@
   line-height: 1;
 }
 
-.lg-tag {
+.fp-tag {
   margin: 10px 0 0;
   font-size: 16px;
   font-style: italic;
   color: var(--green-700);
 }
 
-.lg-mascot {
+.fp-mascot {
   margin-top: auto;
   font-size: 150px;
   line-height: 1;
   filter: drop-shadow(0 12px 20px rgba(23, 49, 31, 0.2));
 }
 
-.lg-banner {
+.fp-banner {
   margin-top: 18px;
   width: 100%;
   display: flex;
@@ -90,10 +90,10 @@
   box-sizing: border-box;
 }
 
-.lg-banner-icon { font-size: 22px; }
+.fp-banner-icon { font-size: 22px; }
 
 /* ---------- Right panel ---------- */
-.lg-right {
+.fp-right {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -101,9 +101,9 @@
   box-sizing: border-box;
 }
 
-.lg-title {
+.fp-title {
   margin: 0;
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 800;
   color: var(--green-900);
   letter-spacing: -0.02em;
@@ -112,17 +112,18 @@
   gap: 10px;
 }
 
-.lg-leaf { font-size: 26px; }
+.fp-leaf { font-size: 24px; }
 
-.lg-sub {
-  margin: 8px 0 26px;
+.fp-sub {
+  margin: 8px 0 22px;
   font-size: 16px;
   color: var(--ink-soft);
 }
 
-.lg-form { display: flex; flex-direction: column; gap: 14px; }
+.fp-form { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
 
-.lg-field {
+/* ---------- Inputs ---------- */
+.fp-field {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -135,13 +136,13 @@
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.lg-field:focus-within {
+.fp-field:focus-within {
   background: #fff;
   border-color: var(--green-600);
   box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.15);
 }
 
-.lg-field-icon {
+.fp-field-icon {
   width: 22px;
   text-align: center;
   font-size: 18px;
@@ -149,7 +150,7 @@
   flex-shrink: 0;
 }
 
-.lg-field input {
+.fp-field input {
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -162,14 +163,10 @@
   color: var(--ink);
 }
 
-.lg-field input:focus {
-  outline: none;
-  border: 0;
-}
+.fp-field input:focus { outline: none; border: 0; }
+.fp-field input::placeholder { color: #8a978d; }
 
-.lg-field input::placeholder { color: #8a978d; }
-
-.lg-eye {
+.fp-eye {
   background: none;
   border: 0;
   padding: 4px;
@@ -179,49 +176,39 @@
   flex-shrink: 0;
 }
 
-.lg-row {
+/* ---------- 6-digit code boxes ---------- */
+.fp-otp {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin: 2px 2px 4px;
-  font-size: 15px;
-}
-
-.lg-remember {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  color: var(--ink-soft);
-  font-weight: 500;
-  cursor: pointer;
+  margin: 6px 0 4px;
 }
 
-.lg-remember input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--green-700);
-  cursor: pointer;
+.fp-otp-box {
+  width: 100%;
+  max-width: 62px;
+  height: 66px;
+  padding: 0;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--green-900);
+  background: #f4f6f1;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.lg-forgot {
-  margin: -4px 2px 2px;
-  text-align: right;
-  font-size: 15px;
+.fp-otp-box:focus {
+  background: #fff;
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(45, 122, 79, 0.15);
 }
 
-.lg-forgot .lg-link { font-weight: 600; }
-
-.lg-link {
-  color: var(--green-700);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.lg-link:hover { text-decoration: underline; }
-
-.lg-btn-primary {
+/* ---------- Buttons ---------- */
+.fp-btn-primary {
   margin-top: 6px;
   height: 56px;
   width: 100%;
@@ -241,22 +228,44 @@
   transition: background 0.15s ease, transform 0.05s ease;
 }
 
-.lg-btn-primary:hover { background: var(--green-950); }
-.lg-btn-primary:active { transform: translateY(1px); }
-.lg-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.fp-btn-primary:hover { background: var(--green-950); }
+.fp-btn-primary:active { transform: translateY(1px); }
+.fp-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.lg-footer {
-  margin: 14px 0 0;
+/* ---------- Footer links ---------- */
+.fp-footer {
+  margin: 16px 0 0;
   text-align: center;
   font-size: 15px;
   color: var(--ink-soft);
 }
 
+.fp-link {
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fp-link:hover { text-decoration: underline; }
+
+.fp-link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--green-700);
+  cursor: pointer;
+}
+
+.fp-link-btn:hover { text-decoration: underline; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
-  .lg-card { grid-template-columns: 1fr; }
-  .lg-left { min-height: auto; padding: 32px 24px 24px; }
-  .lg-mascot { font-size: 110px; margin-top: 16px; }
-  .lg-right { padding: 32px 24px 36px; }
-  .lg-title { font-size: 28px; }
+  .fp-card { grid-template-columns: 1fr; }
+  .fp-left { min-height: auto; padding: 32px 24px 24px; }
+  .fp-mascot { font-size: 110px; margin-top: 16px; }
+  .fp-right { padding: 32px 24px 36px; }
+  .fp-title { font-size: 28px; }
+  .fp-otp-box { height: 56px; font-size: 22px; }
 }

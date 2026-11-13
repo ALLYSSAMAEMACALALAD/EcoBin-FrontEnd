@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Notice } from '../components/ui.jsx';
-import PageHero from '../components/PageHero.jsx';
 import './ForgotPassword.css';
 
 const CODE_LENGTH = 6;
@@ -18,6 +17,7 @@ export default function ForgotPassword() {
   const [digits, setDigits] = useState(emptyDigits);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const otpRefs = useRef([]);
@@ -152,108 +152,149 @@ export default function ForgotPassword() {
     setStep('email');
   }
 
+  const titles = {
+    email: { h: 'Forgot password?', sub: 'Enter your email and we will send you a 6-digit code' },
+    code: { h: 'Enter the code', sub: `We sent a 6-digit code to ${email}` },
+    password: { h: 'New password', sub: 'Choose a new password for your account' },
+  };
+
   return (
-    <div className="public-page">
-      <PageHero
-        eyebrow="Account"
-        title="Reset your password"
-        text="Enter your email, type the 6-digit code we send you, then choose a new password."
-      />
-      <div className="auth-wrap">
-        {step === 'email' && (
-          <form className="card auth-card" onSubmit={sendCode}>
-            <h2>Forgot password</h2>
-            <Notice kind={msg.kind}>{msg.text}</Notice>
-            <label>
-              Email
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="username"
-              />
-            </label>
-            <button className="btn primary block" disabled={busy}>
-              {busy ? 'Sending…' : 'Send code'}
-            </button>
-            <p className="muted center">
-              <Link to="/login">Back to sign in</Link>
-            </p>
-          </form>
-        )}
+    <div className="fp-page">
+      <div className="fp-card">
+        {/* Left: brand panel */}
+        <aside className="fp-left">
+          <div className="fp-logo-mark">♻️</div>
+          <div className="fp-brand">EcoBin</div>
+          <p className="fp-tag">Recycle. Earn. Keep it Green.</p>
 
-        {step === 'code' && (
-          <form className="card auth-card" onSubmit={verifyCode}>
-            <h2>Enter the code</h2>
-            <Notice kind={msg.kind}>{msg.text}</Notice>
-            <p className="muted center">
-              We sent a 6-digit code to <strong>{email}</strong>.
-            </p>
-            <div className="fp-otp" onPaste={handlePaste}>
-              {digits.map((digit, index) => (
+          <div className="fp-mascot" aria-hidden="true">🗑️</div>
+
+          <div className="fp-banner">
+            <span className="fp-banner-icon">🌱</span>
+            <span>
+              Together for a<br />
+              Cleaner Community
+            </span>
+          </div>
+        </aside>
+
+        {/* Right: steps */}
+        <section className="fp-right">
+          <h1 className="fp-title">
+            {titles[step].h} <span className="fp-leaf">🍃</span>
+          </h1>
+          <p className="fp-sub">{titles[step].sub}</p>
+
+          <Notice kind={msg.kind}>{msg.text}</Notice>
+
+          {step === 'email' && (
+            <form onSubmit={sendCode} className="fp-form">
+              <div className="fp-field">
+                <span className="fp-field-icon" aria-hidden="true">✉️</span>
                 <input
-                  key={index}
-                  ref={(el) => { otpRefs.current[index] = el; }}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleDigitChange(index, e)}
-                  onKeyDown={(e) => handleDigitKeyDown(index, e)}
-                  onFocus={(e) => e.target.select()}
-                  aria-label={`Digit ${index + 1} of ${CODE_LENGTH}`}
-                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                  type="email"
+                  placeholder="Email"
+                  aria-label="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="username"
                 />
-              ))}
-            </div>
-            <button className="btn primary block" disabled={busy || !codeComplete}>
-              {busy ? 'Verifying…' : 'Verify code'}
-            </button>
-            <p className="muted center">
-              Didn't get the email?{' '}
-              <button type="button" className="btn small ghost" onClick={startOver}>
-                Send again
-              </button>
-            </p>
-          </form>
-        )}
+              </div>
 
-        {step === 'password' && (
-          <form className="card auth-card" onSubmit={resetPassword}>
-            <h2>New password</h2>
-            <Notice kind={msg.kind}>{msg.text}</Notice>
-            <label>
-              New password (min. 8 characters)
-              <input
-                type="password"
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
-            </label>
-            <label>
-              Confirm new password
-              <input
-                type="password"
-                minLength={8}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
-            </label>
-            <button className="btn primary block" disabled={busy}>
-              {busy ? 'Saving…' : 'Reset password'}
-            </button>
-            <p className="muted center">
-              <Link to="/login">Back to sign in</Link>
-            </p>
-          </form>
-        )}
+              <button className="fp-btn-primary" type="submit" disabled={busy}>
+                <span aria-hidden="true">✉</span>
+                {busy ? 'Sending…' : 'Send code'}
+              </button>
+            </form>
+          )}
+
+          {step === 'code' && (
+            <form onSubmit={verifyCode} className="fp-form">
+              <div className="fp-otp" onPaste={handlePaste}>
+                {digits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => { otpRefs.current[index] = el; }}
+                    className="fp-otp-box"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleDigitChange(index, e)}
+                    onKeyDown={(e) => handleDigitKeyDown(index, e)}
+                    onFocus={(e) => e.target.select()}
+                    aria-label={`Digit ${index + 1} of ${CODE_LENGTH}`}
+                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                  />
+                ))}
+              </div>
+
+              <button className="fp-btn-primary" type="submit" disabled={busy || !codeComplete}>
+                <span aria-hidden="true">✓</span>
+                {busy ? 'Verifying…' : 'Verify code'}
+              </button>
+
+              <p className="fp-footer">
+                Didn't get the email?{' '}
+                <button type="button" className="fp-link-btn" onClick={startOver}>
+                  Send again
+                </button>
+              </p>
+            </form>
+          )}
+
+          {step === 'password' && (
+            <form onSubmit={resetPassword} className="fp-form">
+              <div className="fp-field">
+                <span className="fp-field-icon" aria-hidden="true">🔒</span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="New password (min. 8 characters)"
+                  aria-label="New password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  minLength={8}
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="fp-eye"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+
+              <div className="fp-field">
+                <span className="fp-field-icon" aria-hidden="true">🔒</span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Confirm new password"
+                  aria-label="Confirm new password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  minLength={8}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <button className="fp-btn-primary" type="submit" disabled={busy}>
+                <span aria-hidden="true">↻</span>
+                {busy ? 'Saving…' : 'Reset password'}
+              </button>
+            </form>
+          )}
+
+          <p className="fp-footer">
+            Remember your password?{' '}
+            <Link className="fp-link" to="/login">Sign in</Link>
+          </p>
+        </section>
       </div>
     </div>
   );
