@@ -13,6 +13,7 @@ export default function ForgotPassword() {
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
+  const codeComplete = code.length === 6;
 
   async function sendCode(e) {
     e.preventDefault();
@@ -34,6 +35,10 @@ export default function ForgotPassword() {
 
   async function resetPassword(e) {
     e.preventDefault();
+    if (!codeComplete) {
+      setMsg({ kind: 'error', text: 'Enter the 6-digit code from your email first.' });
+      return;
+    }
     if (password !== confirm) {
       setMsg({ kind: 'error', text: 'The passwords do not match.' });
       return;
@@ -55,7 +60,7 @@ export default function ForgotPassword() {
       <PageHero
         eyebrow="Account"
         title="Reset your password"
-        text="Get the code from your email and enter it together with your new password."
+        text="Enter the 6-digit code from your email first, then choose your new password."
       />
       <div className="auth-wrap">
         {step === 'email' ? (
@@ -89,35 +94,50 @@ export default function ForgotPassword() {
                 inputMode="numeric"
                 maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  setCode(value);
+                  if (value.length < 6) {
+                    setPassword('');
+                    setConfirm('');
+                  }
+                }}
                 required
               />
             </label>
-            <label>
-              New password (min. 8 characters)
-              <input
-                type="password"
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
-            </label>
-            <label>
-              Confirm new password
-              <input
-                type="password"
-                minLength={8}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
-            </label>
-            <button className="btn primary block" disabled={busy}>
-              {busy ? 'Saving…' : 'Reset password'}
-            </button>
+            {codeComplete ? (
+              <>
+                <label>
+                  New password (min. 8 characters)
+                  <input
+                    type="password"
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                </label>
+                <label>
+                  Confirm new password
+                  <input
+                    type="password"
+                    minLength={8}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                  />
+                </label>
+                <button className="btn primary block" disabled={busy}>
+                  {busy ? 'Saving…' : 'Reset password'}
+                </button>
+              </>
+            ) : (
+              <p className="muted center">
+                Enter the 6-digit code from your email to reveal the password fields.
+              </p>
+            )}
             <p className="muted center">
               Didn't get the email?{' '}
               <button type="button" className="btn small ghost" onClick={() => setStep('email')}>
