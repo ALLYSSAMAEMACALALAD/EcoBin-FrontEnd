@@ -258,3 +258,11 @@
   .rd-hero h1 { font-size: 26px; }
   .rd-stat-value { font-size: 30px; }
 }
+/* Reward image on the resident rewards grid */
+.rd-reward-img {
+  width: 100%; height: 170px; object-fit: cover; border-radius: 14px;
+  border: 1px solid var(--line); margin-bottom: 12px; display: block; background: #f4f8ef;
+}
+.rd-reward-icon-big {
+  font-size: 64px; line-height: 1; text-align: center; padding: 18px 0; display: block;
+}

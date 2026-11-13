@@ -76,7 +76,7 @@ function getBalance(response) {
   return null;
 }
 
-// Eco status batay sa points. Ginagamit sa "Eco Status" card.
+// Eco status based on points. Used in the "Eco Status" card.
 const ECO_TIERS = [
   { min: 0, name: 'Eco Starter' },
   { min: 100, name: 'Eco Helper' },
@@ -102,7 +102,7 @@ function ecoTier(points) {
   };
 }
 
-// Pinakamalapit na pickup mula sa routes ng resident
+// Finds the next upcoming pickup from the resident's routes
 function nextPickupFrom(routes = []) {
   const today = new Date().toLocaleDateString('en-CA');
   const upcoming = routes
@@ -241,7 +241,7 @@ function Overview({ onNavigate }) {
           <div className="rd-stat-label">Your Eco Status</div>
           <div className="rd-stat-value" style={{ fontSize: 30 }}>{tier.name}</div>
           <div className="rd-stat-sub">
-            {tier.next ? `${tier.needed} pts pa bago maabot ang ${tier.next}` : 'Naabot mo na ang pinakamataas na level!'}
+            {tier.next ? `${tier.needed} pts to go until ${tier.next}` : "You've reached the highest level!"}
           </div>
           <div className="rd-progress">
             <span style={{ width: `${tier.progress * 100}%` }} />
@@ -260,7 +260,7 @@ function Overview({ onNavigate }) {
               <div className="rd-stat-sub">{nextPickup.name}</div>
             </>
           ) : (
-            <div className="rd-stat-sub">Walang nakatakdang pickup.</div>
+            <div className="rd-stat-sub">No pickup scheduled.</div>
           )}
           <button
             className="btn ghost"
@@ -291,7 +291,7 @@ function Overview({ onNavigate }) {
                 title={`${d.weight_kg} kg`}
                 style={{ height: `${(Number(d.weight_kg) / maxKg) * 100}%` }}
               />
-            )) : <p className="muted">Wala pang drop-offs.</p>}
+            )) : <p className="muted">No drop-offs yet.</p>}
           </div>
         </div>
 
@@ -364,7 +364,7 @@ function Overview({ onNavigate }) {
               ))}
             </ul>
           ) : (
-            <p className="muted">Wala pang aktibidad. Magdala ng recyclables sa hub.</p>
+            <p className="muted">No activity yet. Bring recyclables to the hub.</p>
           )}
         </div>
 
@@ -374,7 +374,7 @@ function Overview({ onNavigate }) {
           </div>
           <div className="rd-eco-qr">
             <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
-              Ipakita ang QR code na ito sa drop-off hub para ma-credit ang points mo.
+              Show this QR code at the drop-off hub so your points can be credited.
             </p>
             <QRCodeSVG value={user.eco_id} size={160} includeMargin />
             <p className="mono" style={{ margin: 0 }}>{user.eco_id}</p>
@@ -534,6 +534,7 @@ function Rewards() {
     return {
       ...item,
       id: backendReward?.id,
+      image_url: backendReward?.image_url || null,
       stock: stockValue != null
         ? Number(stockValue)
         : item.stock
@@ -660,7 +661,12 @@ downloadCertificate(d.certificate);
 
             return (
               <div className="card" key={reward.name}>
-                <h3>{reward.icon} {reward.name}</h3>
+                {reward.image_url ? (
+                  <img className="rd-reward-img" src={reward.image_url} alt={reward.name} loading="lazy" />
+                ) : (
+                  <div className="rd-reward-icon-big">{reward.icon}</div>
+                )}
+                <h3>{reward.name}</h3>
 
                 <p className="muted">
                   Points Required: {reward.points_cost}
@@ -761,23 +767,6 @@ downloadCertificate(d.certificate);
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
-// Pinaliit ang larawan bago i-upload. Kung hindi kaya (halimbawa HEIC), ibinabalik ang orihinal.
-async function shrinkImage(file, maxSize = 1600, quality = 0.8) {
-  try {
-    const img = await createImageBitmap(file);
-    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', quality));
-    if (!blob) return file;
-    return new File([blob], 'report.jpg', { type: 'image/jpeg' });
-  } catch {
-    return file;
-  }
-}
-
 function ReportDumping({ onFiled }) {
   const [form, setForm] = useState({
     location: '',
@@ -795,7 +784,7 @@ function ReportDumping({ onFiled }) {
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
 
-  // Gumagawa ng preview ng larawan at nililinis ang memory kapag nagbago o tinanggal
+  // Creates an image preview and cleans up memory when the photo changes or is removed
   useEffect(() => {
     if (!photo) {
       setPreview(null);
@@ -816,7 +805,7 @@ function ReportDumping({ onFiled }) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(compressed.type)) {
       setMsg({
         kind: 'error',
-        text: 'Hindi ma-read ng browser ang larawan. I-save o i-convert bilang JPEG/PNG at subukan ulit.'
+        text: "The browser can't read this image. Save it as JPEG/PNG and try again."
       });
       return;
     }
@@ -824,7 +813,7 @@ function ReportDumping({ onFiled }) {
     if (compressed.size > MAX_PHOTO_BYTES) {
       setMsg({
         kind: 'error',
-        text: 'Masyadong malaki ang larawan. Max 5 MB.'
+        text: 'Image is too large. Maximum 5 MB.'
       });
       return;
     }
@@ -917,7 +906,7 @@ function ReportDumping({ onFiled }) {
         <div className="stack">
           <span>Photo evidence (optional, max 5 MB)</span>
 
-          {/* Hidden inputs: ang button ang nagbubukas sa mga ito */}
+          {/* Hidden inputs: these two buttons open the camera/gallery picker */}
           <input
             ref={cameraRef}
             type="file"
@@ -961,7 +950,7 @@ function ReportDumping({ onFiled }) {
             <div className="stack">
               <img
                 src={preview}
-                alt="Preview ng ni-report na dumping"
+                alt="Preview of the reported dumping"
                 style={{ width: '100%', maxWidth: 320, borderRadius: 14, objectFit: 'cover' }}
               />
               <div className="row">
@@ -1079,7 +1068,7 @@ const wasteCategories = [
   }
 ];
 
-// Ginagamit ng search. Idagdag dito ang mga item na madalas itanong ng residents.
+// Used by search. Add items that residents ask about most.
 const wasteItems = [
   { name: 'Banana peel', category: 'biodegradable', disposal: 'Put in the biodegradable bin or compost it.', keywords: ['fruit', 'peel'] },
   { name: 'Eggshell', category: 'biodegradable', disposal: 'Crush and put in the biodegradable bin or compost.', keywords: ['egg'] },
@@ -1104,7 +1093,7 @@ const wasteItems = [
   { name: 'Old phone or charger', category: 'hazardous', disposal: 'Take to an e-waste collection point.', keywords: ['e-waste', 'cellphone', 'charger', 'laptop', 'electronics'] }
 ];
 
-// Bank ng tanong para sa quiz. Pumipili ng random na 5 tuwing magsisimula ang quiz.
+// Question bank for the quiz. Picks 5 random questions each round.
 const quizBank = [
   {
     question: 'Where should chip wrappers go?',
@@ -1177,7 +1166,7 @@ const quizBank = [
   }
 ];
 
-// Pinaghahalo ang pagkakasunod ng tanong at ng options para iba-iba ang bawat quiz
+// Shuffles the order of the questions and options so every quiz round is different
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1248,7 +1237,7 @@ function WasteBasics() {
       <Card title="Four types of waste">
         <img
           src="/images/waste-types.png"
-          alt="Apat na bin: berde para sa compostable, asul para sa recyclable, dilaw para sa general, at pula para sa hazardous"
+          alt="Four bins: green for compostable, blue for recyclable, yellow for residual, and red for hazardous"
           style={{
             width: '100%',
             maxWidth: 720,
@@ -1291,7 +1280,7 @@ function WasteBasics() {
   );
 }
 
-// ---------- Search (waste item lookup, hindi ang dashboard search) ----------
+// ---------- Search (waste item lookup, not the dashboard search) ----------
 
 function WasteSearch() {
   const [query, setQuery] = useState('');

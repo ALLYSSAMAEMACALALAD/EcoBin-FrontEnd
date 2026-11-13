@@ -262,3 +262,6 @@
   font-size: 13px;
   white-space: nowrap;
 }
+/* Reward image field: input + upload button in one row */
+.reward-image-row { display: flex; gap: 10px; align-items: center; }
+.reward-image-row input { flex: 1; min-width: 0; }

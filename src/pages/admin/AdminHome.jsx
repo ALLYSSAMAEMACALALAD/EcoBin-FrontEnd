@@ -8,6 +8,7 @@ import autoTable from 'jspdf-autotable';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
+import { compressImage } from '../../lib/image.js';
 import './AdminHome.css';
 
 const NAV_ITEMS = [
@@ -991,7 +992,32 @@ function RewardsInventory() {
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [filter, setFilter] = useState('');
+
+  async function uploadImage(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setMsg({ kind: 'error', text: 'Please choose an image file (JPEG, PNG or WebP).' });
+      return;
+    }
+    setUploading(true);
+    setMsg({ kind: 'info', text: '' });
+    try {
+      const compressed = await compressImage(file);
+      const fd = new FormData();
+      fd.append('photo', compressed);
+      const d = await api('/rewards/upload-image', { method: 'POST', body: fd });
+      setForm((f) => ({ ...f, image_url: d.image_url }));
+      setMsg({ kind: 'success', text: 'Image uploaded and attached to this reward.' });
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message || 'Unable to upload the image.' });
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const list = rewards.data?.rewards || [];
   const withStatus = list.map((r) => ({ ...r, _status: stockStatus(r) }));
@@ -1118,8 +1144,25 @@ function RewardsInventory() {
               <input value={form.name} onChange={setField('name')} required />
             </label>
 
-            <label>Image URL
-              <input value={form.image_url} onChange={setField('image_url')} placeholder="https://…" />
+            <label>Image
+              <span className="reward-image-row">
+                <input value={form.image_url} onChange={setField('image_url')} placeholder="Paste an image URL, or upload one →" />
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  disabled={uploading}
+                  onClick={() => document.getElementById('reward-image-upload')?.click()}
+                >
+                  {uploading ? 'Uploading…' : 'Upload'}
+                </button>
+                <input
+                  id="reward-image-upload"
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={uploadImage}
+                />
+              </span>
             </label>
             {form.image_url && (
               <img
