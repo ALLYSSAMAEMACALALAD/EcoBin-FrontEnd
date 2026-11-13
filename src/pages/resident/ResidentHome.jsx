@@ -10,33 +10,33 @@ import {
   fmtDate,
   cap
 } from '../../components/ui.jsx';
-import PageHero from '../../components/PageHero.jsx';
 import { downloadCertificate } from '../../lib/certificate.js';
+import './ResidentHome.css';
 
 // ==========================================
 // REWARDS CATALOG
 // ==========================================
 
 const rewardCatalog = [
-  { name: 'Plant Seedling', points_cost: 50, stock: 30 },
-  { name: 'Recycled Pencil Set', points_cost: 50, stock: 30 },
-  { name: 'Recycled Notebook', points_cost: 75, stock: 25 },
-  { name: 'Bamboo Toothbrush', points_cost: 75, stock: 20 },
-  { name: 'Reusable Tote Bag', points_cost: 100, stock: 30 },
-  { name: 'Reusable Mesh Bag', points_cost: 100, stock: 25 },
-  { name: 'Reusable Food Container', points_cost: 150, stock: 15 },
-  { name: 'Reusable Tumbler', points_cost: 200, stock: 15 },
-  { name: 'Eco Cleaning Kit', points_cost: 200, stock: 10 },
-  { name: 'Gardening Starter Kit', points_cost: 250, stock: 10 },
-  { name: 'Grocery Discount Voucher', points_cost: 300, stock: 20 },
-  { name: 'School Supplies Bundle', points_cost: 350, stock: 10 },
-  { name: 'Grocery Gift Pack', points_cost: 500, stock: 10 },
-  { name: 'Transportation Fare Voucher', points_cost: 500, stock: 10 },
-  { name: 'Eco-Friendly Household Kit', points_cost: 750, stock: 5 }
+  { name: 'Plant Seedling', points_cost: 50, stock: 30, icon: '🌱' },
+  { name: 'Recycled Pencil Set', points_cost: 50, stock: 30, icon: '✏️' },
+  { name: 'Recycled Notebook', points_cost: 75, stock: 25, icon: '📓' },
+  { name: 'Bamboo Toothbrush', points_cost: 75, stock: 20, icon: '🪥' },
+  { name: 'Reusable Tote Bag', points_cost: 100, stock: 30, icon: '👜' },
+  { name: 'Reusable Mesh Bag', points_cost: 100, stock: 25, icon: '🛍️' },
+  { name: 'Reusable Food Container', points_cost: 150, stock: 15, icon: '🍱' },
+  { name: 'Reusable Tumbler', points_cost: 200, stock: 15, icon: '🥤' },
+  { name: 'Eco Cleaning Kit', points_cost: 200, stock: 10, icon: '🧽' },
+  { name: 'Gardening Starter Kit', points_cost: 250, stock: 10, icon: '🪴' },
+  { name: 'Grocery Discount Voucher', points_cost: 300, stock: 20, icon: '🎟️' },
+  { name: 'School Supplies Bundle', points_cost: 350, stock: 10, icon: '🎒' },
+  { name: 'Grocery Gift Pack', points_cost: 500, stock: 10, icon: '🎁' },
+  { name: 'Transportation Fare Voucher', points_cost: 500, stock: 10, icon: '🚌' },
+  { name: 'Eco-Friendly Household Kit', points_cost: 750, stock: 5, icon: '🏠' }
 ];
 
 // ==========================================
-// BALANCE HELPER
+// HELPERS
 // ==========================================
 
 function getBalance(response) {
@@ -75,50 +75,125 @@ function getBalance(response) {
   return null;
 }
 
+// Eco status batay sa points. Ginagamit sa "Eco Status" card.
+const ECO_TIERS = [
+  { min: 0, name: 'Eco Starter' },
+  { min: 100, name: 'Eco Helper' },
+  { min: 300, name: 'Green Champion' },
+  { min: 750, name: 'Eco Hero' }
+];
+
+function ecoTier(points) {
+  if (points == null) return { name: '—', progress: 0, next: null, needed: 0 };
+
+  let idx = 0;
+  ECO_TIERS.forEach((t, i) => { if (points >= t.min) idx = i; });
+
+  const cur = ECO_TIERS[idx];
+  const nxt = ECO_TIERS[idx + 1];
+  const progress = nxt ? (points - cur.min) / (nxt.min - cur.min) : 1;
+
+  return {
+    name: cur.name,
+    progress: Math.min(1, Math.max(0, progress)),
+    next: nxt?.name ?? null,
+    needed: nxt ? nxt.min - points : 0
+  };
+}
+
+// Pinakamalapit na pickup mula sa routes ng resident
+function nextPickupFrom(routes = []) {
+  const today = new Date().toLocaleDateString('en-CA');
+  const upcoming = routes
+    .filter((r) => r.route_date >= today && r.status !== 'completed')
+    .sort((a, b) => a.route_date.localeCompare(b.route_date));
+  return upcoming[0] || null;
+}
+
+function formatLongDate(isoDate) {
+  const d = new Date(`${isoDate}T00:00:00`);
+  return d.toLocaleDateString('en-PH', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 // ==========================================
-// RESIDENT HOME
+// RESIDENT HOME (SHELL)
 // ==========================================
+
+const NAV_ITEMS = [
+  ['overview', '🏠', 'Dashboard'],
+  ['schedule', '📅', 'Collection Schedule'],
+  ['rewards', '🎁', 'Rewards'],
+  ['report', '⚠️', 'Report Dumping'],
+  ['tickets', '🎫', 'My Tickets'],
+  ['guide', '📖', 'Segregation Guide']
+];
 
 export default function ResidentHome() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [tab, setTab] = useState('overview');
 
-  const tabs = [
-    ['overview', 'Overview'],
-    ['schedule', 'Collection schedule'],
-    ['guide', 'Segregation guide'],
-    ['rewards', 'Rewards'],
-    ['report', 'Report dumping'],
-    ['tickets', 'My tickets']
-  ];
+  const firstName = (user?.name || '').split(' ')[0] || 'Resident';
+  const initial = firstName.charAt(0).toUpperCase();
 
   return (
-    <>
-      <PageHero
-        eyebrow="Resident dashboard"
-        title={`Hello, ${user.name}`}
-        text="Track your pickups, points, rewards, and reports in one place."
-      />
+    <div className="rd-shell">
+      <aside className="rd-sidebar">
+        <div className="rd-logo">
+          <div className="rd-logo-mark">♻️</div>
+          <div>
+            <div className="rd-logo-name">EcoBin</div>
+            <div className="rd-logo-tag">Recycle. Earn. Keep it Green.</div>
+          </div>
+        </div>
 
-      <nav className="tabs">
-        {tabs.map(([k, label]) => (
-          <button
-            key={k}
-            className={tab === k ? 'active' : ''}
-            onClick={() => setTab(k)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+        <nav className="rd-nav">
+          {NAV_ITEMS.map(([key, icon, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={tab === key ? 'active' : ''}
+              onClick={() => setTab(key)}
+            >
+              <span className="rd-nav-icon">{icon}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
 
-      {tab === 'overview' && <Overview />}
-      {tab === 'schedule' && <Schedule />}
-      {tab === 'guide' && <WasteGuide />}
-      {tab === 'rewards' && <Rewards />}
-      {tab === 'report' && <ReportDumping onFiled={() => setTab('tickets')} />}
-      {tab === 'tickets' && <MyTickets />}
-    </>
+        <button
+          type="button"
+          className="rd-logout"
+          onClick={() => logout?.()}
+        >
+          Logout
+        </button>
+      </aside>
+
+      <main className="rd-main">
+        <header className="rd-topbar">
+          <div className="rd-bell" aria-label="Notifications">🔔</div>
+          <div className="rd-user">
+            <div className="rd-avatar">{initial}</div>
+            <div>
+              <div className="rd-user-name">Hi, {firstName}!</div>
+              <div className="rd-user-role">Resident</div>
+            </div>
+          </div>
+        </header>
+
+        <section className="rd-hero">
+          <h1>Good day, {firstName}! 🌱</h1>
+          <p>Let's keep our community clean and green together! 🍃</p>
+        </section>
+
+        {tab === 'overview' && <Overview onNavigate={setTab} />}
+        {tab === 'schedule' && <Schedule />}
+        {tab === 'guide' && <WasteGuide />}
+        {tab === 'rewards' && <Rewards />}
+        {tab === 'report' && <ReportDumping onFiled={() => setTab('tickets')} />}
+        {tab === 'tickets' && <MyTickets />}
+      </main>
+    </div>
   );
 }
 
@@ -126,7 +201,7 @@ export default function ResidentHome() {
 // OVERVIEW
 // ==========================================
 
-function Overview() {
+function Overview({ onNavigate }) {
   const { user } = useAuth();
   const balance = useLoader(() => api('/balance'));
   const drops = useLoader(() => api('/dropoffs'));
@@ -134,62 +209,196 @@ function Overview() {
   const routes = useLoader(() => api('/routes'));
 
   const points = getBalance(balance.data);
+  const tier = ecoTier(points);
+  const dropRows = drops.data?.dropoffs || [];
+  const totalKg = dropRows.reduce((sum, d) => sum + Number(d.weight_kg || 0), 0);
+  const recentBars = dropRows.slice(0, 8).reverse();
+  const maxKg = Math.max(1, ...recentBars.map((d) => Number(d.weight_kg) || 0));
+  const nextPickup = nextPickupFrom(routes.data?.routes || []);
 
   return (
     <>
-      <div className="grid-2">
-        <Card title="Your eco-ID">
-          <p className="muted">
-            Show this QR code at a drop-off hub. The collector scans it to credit your points.
-          </p>
-
-          <div className="qr">
-            <QRCodeSVG value={user.eco_id} size={180} includeMargin />
+      {/* Stat cards */}
+      <div className="rd-stats">
+        <div className="card rd-glow">
+          <div className="rd-stat-label">Your Points</div>
+          <div className="rd-stat-value">
+            {points !== null ? `${points} pts` : balance.loading ? '...' : '—'}
           </div>
-
-          <p className="center mono">{user.eco_id}</p>
-        </Card>
-
-        <Card title="Available points">
-          <p className="big">
-            {points !== null ? `${points} pts` : balance.loading ? 'Loading...' : 'Unavailable'}
-          </p>
-
           {balance.error && <Notice kind="error">{balance.error}</Notice>}
-
-          <p className="muted">
-            Points you can redeem for rewards.
-          </p>
-
-          <button className="btn ghost" type="button" onClick={() => balance.reload()}>
-            Refresh points
+          <button
+            className="btn primary"
+            type="button"
+            style={{ marginTop: 14 }}
+            onClick={() => onNavigate('rewards')}
+          >
+            View Rewards →
           </button>
+        </div>
 
-          <h3>Recent drop-offs</h3>
+        <div className="card rd-glow">
+          <div className="rd-stat-label">Your Eco Status</div>
+          <div className="rd-stat-value" style={{ fontSize: 30 }}>{tier.name}</div>
+          <div className="rd-stat-sub">
+            {tier.next ? `${tier.needed} pts pa bago maabot ang ${tier.next}` : 'Naabot mo na ang pinakamataas na level!'}
+          </div>
+          <div className="rd-progress">
+            <span style={{ width: `${tier.progress * 100}%` }} />
+          </div>
+        </div>
 
-          <Table
-            columns={[
-              {
-                key: 'created_at',
-                label: 'Date',
-                render: (r) => fmtDate(r.created_at)
-              },
-              {
-                key: 'material',
-                label: 'Material',
-                render: (r) => cap(r.material)
-              },
-              { key: 'weight_kg', label: 'kg' },
-              { key: 'points', label: 'Points' }
-            ]}
-            rows={drops.data?.dropoffs?.slice(0, 8)}
-            empty="No drop-offs yet. Bring your sorted recyclables to a hub."
-          />
-        </Card>
+        <div className="card rd-glow">
+          <div className="rd-stat-label">Next Collection</div>
+          {routes.loading ? (
+            <div className="rd-stat-sub">Loading…</div>
+          ) : nextPickup ? (
+            <>
+              <div className="rd-stat-value" style={{ fontSize: 26 }}>
+                {formatLongDate(nextPickup.route_date)}
+              </div>
+              <div className="rd-stat-sub">{nextPickup.name}</div>
+            </>
+          ) : (
+            <div className="rd-stat-sub">Walang nakatakdang pickup.</div>
+          )}
+          <button
+            className="btn ghost"
+            type="button"
+            style={{ marginTop: 14 }}
+            onClick={() => onNavigate('schedule')}
+          >
+            View Schedule →
+          </button>
+        </div>
       </div>
-      <div className="grid-2">
-        <CollectionScheduleCard schedules={schedules} zone={user.barangay} />
-        <PickupCard routes={routes} />
+
+      {/* Impact, quick actions, rewards preview */}
+      <div className="rd-row">
+        <div className="card">
+          <div className="rd-card-head">
+            <h3 className="rd-card-title">Recycling Impact</h3>
+          </div>
+          <div className="rd-stat-value" style={{ marginTop: 0 }}>
+            {totalKg.toLocaleString(undefined, { maximumFractionDigits: 2 })} kg
+          </div>
+          <div className="rd-stat-sub">Total recyclables</div>
+          <div className="rd-bars">
+            {recentBars.length ? recentBars.map((d) => (
+              <div
+                key={d.id ?? d.created_at}
+                className="rd-bar"
+                title={`${d.weight_kg} kg`}
+                style={{ height: `${(Number(d.weight_kg) / maxKg) * 100}%` }}
+              />
+            )) : <p className="muted">Wala pang drop-offs.</p>}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="rd-card-head">
+            <h3 className="rd-card-title">Quick Actions</h3>
+          </div>
+          <div className="rd-actions">
+            <button type="button" className="rd-action" onClick={() => onNavigate('report')}>
+              <span className="rd-action-icon">📷</span>
+              Report Dumping
+            </button>
+            <button type="button" className="rd-action" onClick={() => onNavigate('rewards')}>
+              <span className="rd-action-icon">🎁</span>
+              Check Rewards
+            </button>
+            <button type="button" className="rd-action" onClick={() => onNavigate('guide')}>
+              <span className="rd-action-icon">📖</span>
+              View Guide
+            </button>
+            <button type="button" className="rd-action" onClick={() => onNavigate('schedule')}>
+              <span className="rd-action-icon">🗓️</span>
+              View Schedule
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="rd-card-head">
+            <h3 className="rd-card-title">Your Rewards</h3>
+            <button type="button" className="btn ghost small" onClick={() => onNavigate('rewards')}>
+              See All →
+            </button>
+          </div>
+          <div className="rd-reward-grid">
+            {rewardCatalog.slice(0, 3).map((r) => (
+              <button
+                key={r.name}
+                type="button"
+                className="rd-reward"
+                onClick={() => onNavigate('rewards')}
+              >
+                <span className="rd-reward-icon">{r.icon}</span>
+                <span className="rd-reward-name">{r.name}</span>
+                <span className="rd-reward-pts">{r.points_cost} pts</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity and eco-ID */}
+      <div className="rd-row-2">
+        <div className="card">
+          <div className="rd-card-head">
+            <h3 className="rd-card-title">Recent Activity</h3>
+          </div>
+          {dropRows.length ? (
+            <ul className="rd-activity">
+              {dropRows.slice(0, 4).map((d) => (
+                <li key={d.id ?? d.created_at}>
+                  <span className="rd-dot" />
+                  <div>
+                    <div className="rd-activity-text">
+                      You earned {d.points} pts for a {cap(d.material)} drop-off ({d.weight_kg} kg)
+                    </div>
+                    <div className="rd-activity-date">{fmtDate(d.created_at)}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">Wala pang aktibidad. Magdala ng recyclables sa hub.</p>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="rd-card-head">
+            <h3 className="rd-card-title">Your Eco-ID</h3>
+          </div>
+          <div className="rd-eco-qr">
+            <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
+              Ipakita ang QR code na ito sa drop-off hub para ma-credit ang points mo.
+            </p>
+            <QRCodeSVG value={user.eco_id} size={160} includeMargin />
+            <p className="mono" style={{ margin: 0 }}>{user.eco_id}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Drop-off history */}
+      <Card title="Recent drop-offs">
+        {drops.error && <Notice kind="error">{drops.error}</Notice>}
+        <Table
+          columns={[
+            { key: 'created_at', label: 'Date', render: (r) => fmtDate(r.created_at) },
+            { key: 'material', label: 'Material', render: (r) => cap(r.material) },
+            { key: 'weight_kg', label: 'kg' },
+            { key: 'points', label: 'Points' }
+          ]}
+          rows={dropRows.slice(0, 8)}
+          empty="No drop-offs yet. Bring your sorted recyclables to a hub."
+        />
+      </Card>
+
+      <div className="rd-banner">
+        <h3>Together for a Cleaner Community</h3>
+        <p>Reduce. Reuse. Recycle. 🌍</p>
       </div>
     </>
   );
@@ -401,7 +610,7 @@ function Rewards() {
   async function certificate(id) {
     try {
       const d = await api(`/redemptions/${id}/certificate`);
-      downloadCertificate(d.certificate);
+downloadCertificate(d.certificate);
     } catch (e) {
       setMsg({
         kind: 'error',
@@ -449,7 +658,7 @@ function Rewards() {
 
             return (
               <div className="card" key={reward.name}>
-                <h3>{reward.name}</h3>
+                <h3>{reward.icon} {reward.name}</h3>
 
                 <p className="muted">
                   Points Required: {reward.points_cost}
@@ -1078,7 +1287,7 @@ function WasteBasics() {
   );
 }
 
-// ---------- Search ----------
+// ---------- Search (waste item lookup, hindi ang dashboard search) ----------
 
 function WasteSearch() {
   const [query, setQuery] = useState('');

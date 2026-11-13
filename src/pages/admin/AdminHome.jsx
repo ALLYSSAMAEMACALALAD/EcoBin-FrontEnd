@@ -1,67 +1,182 @@
 import { useState } from 'react';
 import {
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { api } from '../../api/client.js';
+import { useAuth } from '../../lib/auth.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
-import PageHero from '../../components/PageHero.jsx';
+import './AdminHome.css';
 
-const TABS = [
-  ['dashboard', 'Dashboard'], ['schedules', 'Schedules'], ['routes', 'Routes & dispatch'],
-  ['redemptions', 'Redemptions'], ['tickets', 'Dumping tickets'], ['users', 'Users & staff'],
-  ['inventory', 'Rewards inventory'], ['reports', 'Reports & analytics'],
+const NAV_ITEMS = [
+  ['dashboard', '🏠', 'Dashboard'],
+  ['users', '👥', 'Users & Staff'],
+  ['schedules', '📅', 'Collection Schedules'],
+  ['routes', '🚚', 'Routes & Dispatch'],
+  ['inventory', '🎁', 'Rewards Management'],
+  ['redemptions', '🎟️', 'Redemptions'],
+  ['tickets', '⚠️', 'Dumping Tickets'],
+  ['reports', '📊', 'Reports & Analytics'],
+];
+
+const PAGE_TITLES = Object.fromEntries(NAV_ITEMS.map(([k, , label]) => [k, label]));
+
+const QUICK_ACTIONS = [
+  ['users', '👥', 'Manage Users', 'tone-green'],
+  ['reports', '📊', 'View Reports', 'tone-blue'],
+  ['inventory', '🎁', 'Update Rewards', 'tone-amber'],
+  ['schedules', '📅', 'View Schedules', 'tone-blue'],
+  ['tickets', '⚠️', 'Check Tickets', 'tone-orange'],
+  ['routes', '🚚', 'Dispatch Routes', 'tone-green'],
 ];
 
 export default function AdminHome() {
+  const { user, logout } = useAuth();
   const [tab, setTab] = useState('dashboard');
+
+  const firstName = (user?.name || '').split(' ')[0] || 'Admin';
+  const initial = firstName.charAt(0).toUpperCase();
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  const weekday = now.toLocaleDateString('en-PH', { weekday: 'long' });
+
   return (
-    <>
-      <PageHero eyebrow="Admin console" title="Admin dashboard" text="Schedules, dispatch, rewards, dumping tickets, and staff accounts." />
-      <nav className="tabs wrap">
-        {TABS.map(([k, label]) => <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{label}</button>)}
-      </nav>
-      {tab === 'dashboard' && <Dashboard />}
-      {tab === 'schedules' && <Schedules />}
-      {tab === 'routes' && <Routes />}
-      {tab === 'redemptions' && <Redemptions />}
-      {tab === 'tickets' && <Tickets />}
-      {tab === 'users' && <Users />}
-      {tab === 'inventory' && <RewardsInventory />}
-      {tab === 'reports' && <ReportsHub />}
-    </>
+    <div className="ad-shell">
+      <aside className="ad-sidebar">
+        <div className="ad-brand">
+          <div className="ad-brand-tile">♻️</div>
+          <div className="ad-brand-name">Eco<span>Bin</span></div>
+          <div className="ad-brand-tag">Recycle. Earn. Keep it Green.</div>
+        </div>
+
+        <nav className="ad-nav">
+          {NAV_ITEMS.map(([key, icon, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={tab === key ? 'active' : ''}
+              onClick={() => setTab(key)}
+            >
+              <span className="ad-nav-icon">{icon}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <button type="button" className="ad-logout" onClick={() => logout?.()}>
+          <span className="ad-nav-icon">⎋</span>
+          Logout
+        </button>
+      </aside>
+
+      <main className="ad-main">
+        <header className="ad-topbar" style={{ justifyContent: 'flex-end' }}>
+          <div className="ad-bell" aria-label="Notifications">
+            🔔
+            <span className="ad-bell-dot" />
+          </div>
+          <div className="ad-date">
+            <strong>{dateLabel}</strong>
+            <span>{weekday}</span>
+          </div>
+          <div className="ad-user">
+            <div className="ad-avatar">{initial}</div>
+            <div>
+              <div className="ad-user-name">{user?.name || 'Admin'}</div>
+              <div className="ad-user-role">{cap(user?.role || 'admin')}</div>
+            </div>
+          </div>
+        </header>
+
+        <div className="ad-page-body">
+          {tab === 'dashboard' && <Dashboard firstName={firstName} onNavigate={setTab} />}
+
+          {tab !== 'dashboard' && (
+            <>
+              <h1 className="ad-page-title">{PAGE_TITLES[tab]}</h1>
+              {tab === 'users' && <Users />}
+              {tab === 'schedules' && <Schedules />}
+              {tab === 'routes' && <Routes />}
+              {tab === 'redemptions' && <Redemptions />}
+              {tab === 'tickets' && <Tickets />}
+              {tab === 'inventory' && <RewardsInventory />}
+              {tab === 'reports' && <ReportsHub />}
+            </>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
 
-// Kinukuha ang count ng isang status mula sa analytics rows
+// Gets the count for one status from the analytics rows
 const countOf = (rows = [], status) => Number(rows.find((r) => r.status === status)?.n || 0);
 
-// Format ng petsa bilang YYYY-MM-DD gamit ang local time
+// Formats a date as YYYY-MM-DD in local time
 const isoLocal = (d) => d.toLocaleDateString('en-CA');
 
-function Dashboard() {
+function Dashboard({ firstName, onNavigate }) {
+  const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const a = useLoader(() => api('/analytics'));
   const reports = useLoader(() => api('/dumping-reports'));
   const routes = useLoader(() => api('/routes'));
   const hubs = useLoader(() => api('/hubs'));
+  const users = useLoader(() => api('/admin/users'));
+  const collectors = useLoader(() => api('/admin/users?role=collector'));
+  const redemptions = useLoader(() => api('/redemptions'));
+  const history = useLoader(() => api('/reports/history'));
 
   if (a.loading) return <p className="muted">Loading…</p>;
   if (a.error) return <Notice kind="error">{a.error}</Notice>;
 
   const t = a.data.totals;
   const dumping = a.data.dumping_by_status;
-  const redemptions = a.data.redemptions_by_status;
+  const redemptionStatus = a.data.redemptions_by_status;
 
   const stats = [
+    { icon: '👤', label: 'Total Users', value: (users.data?.users?.length ?? 0).toLocaleString(), tone: 'tone-green' },
+    { icon: '👷', label: 'Total Collectors', value: (collectors.data?.users?.length ?? 0).toLocaleString(), tone: 'tone-amber' },
+    { icon: '🎁', label: 'Total Redemptions', value: (redemptions.data?.redemptions?.length ?? 0).toLocaleString(), tone: 'tone-orange' },
+    { icon: '♻️', label: 'Total Waste Collected', value: `${Number(t.kg_recycled || 0).toLocaleString()} kg`, tone: 'tone-green' },
+  ];
+
+  const strip = [
     ['Open reports', countOf(dumping, 'open')],
     ['In progress', countOf(dumping, 'investigating')],
-    ['Pending redemptions', countOf(redemptions, 'pending')],
-    ['Residents', t.residents],
-    ['Points awarded', t.points_issued],
+    ['Resolved reports', countOf(dumping, 'resolved')],
+    ['Pending redemptions', countOf(redemptionStatus, 'pending')],
+    ['Points awarded', Number(t.points_issued || 0).toLocaleString()],
   ];
-  const resolved = countOf(dumping, 'resolved');
 
-  const recent = (reports.data?.reports || []).slice(0, 5);
+  const chartData = (a.data.dropoffs_last_14_days || []).map((d) => ({
+    day: String(d.day).slice(5),
+    kg: Number(d.kg) || 0,
+  }));
+
+  const recentReports = (reports.data?.reports || []).slice(0, 5);
+
+  const activity = [
+    ...(redemptions.data?.redemptions || []).map((r) => ({
+      key: `r${r.id}`,
+      icon: '🎁',
+      tone: 'tone-amber',
+      title: 'Reward redemption requested',
+      sub: `${r.resident_name} · ${r.reward_name}`,
+      at: r.created_at,
+    })),
+    ...(reports.data?.reports || []).map((r) => ({
+      key: `d${r.id}`,
+      icon: '⚠️',
+      tone: 'tone-orange',
+      title: 'Dumping ticket filed',
+      sub: `${r.ticket_no} · ${r.location}`,
+      at: r.created_at,
+    })),
+  ]
+    .sort((x, y) => String(y.at).localeCompare(String(x.at)))
+    .slice(0, 5);
 
   const today = new Date();
   const weekEnd = new Date();
@@ -70,53 +185,223 @@ function Dashboard() {
   const endStr = isoLocal(weekEnd);
   const upcoming = (routes.data?.routes || []).filter((r) => r.route_date >= startStr && r.route_date <= endStr);
 
+  const recentGenerated = (history.data?.reports || []).slice(0, 5);
+
+  function pdfReport(r) {
+    try {
+      downloadPdf(r.title, `Period: ${r.from} to ${r.to}`, r.tables || [], `ecobin-report-${r.period}-${r.to}.pdf`);
+    } catch (err) {
+      setMsg({ kind: 'error', text: `Unable to generate PDF: ${err.message}` });
+    }
+  }
+
+  function csvReport(r) {
+    downloadFile(
+      `ecobin-report-${r.period}-${r.to}.csv`,
+      '\uFEFF' + tablesToCsv(r.tables || []),
+      'text/csv;charset=utf-8'
+    );
+  }
+
   return (
     <>
-      <div className="stats">
-        {stats.map(([k, v]) => (
-          <div className="stat" key={k}>
-            <span>{Number(v).toLocaleString()}</span>
-            <small>{k}</small>
+      <section className="ad-hero">
+        <h1>Welcome back, {firstName}! 🌿</h1>
+        <p>Here's what's happening in EcoBin today.</p>
+      </section>
+
+      {msg.text && <Notice kind={msg.kind}>{msg.text}</Notice>}
+
+      <div className="ad-stats">
+        {stats.map((s) => (
+          <div className="ad-stat" key={s.label}>
+            <div className={`ad-stat-icon ${s.tone}`}>{s.icon}</div>
+            <div>
+              <div className="ad-stat-label">{s.label}</div>
+              <div className="ad-stat-value">{s.value}</div>
+            </div>
           </div>
         ))}
       </div>
-      <div className="stats stats-second">
-        <div className="stat">
-          <span>{resolved.toLocaleString()}</span>
-          <small>Resolved reports</small>
+
+      <div className="ad-strip">
+        {strip.map(([label, value]) => (
+          <div className="ad-strip-item" key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="ad-row">
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>Collection Overview</h3>
+            <span className="ad-chip">Last 14 days</span>
+          </div>
+          {chartData.length ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="adArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2d7a4f" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#2d7a4f" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e1e8da" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} unit=" kg" />
+                <Tooltip formatter={(v) => `${v} kg`} />
+                <Area type="monotone" dataKey="kg" stroke="#2d7a4f" strokeWidth={2.5} fill="url(#adArea)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="muted">No drop-offs in the last 14 days.</p>
+          )}
+        </div>
+
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>System Activity</h3>
+          </div>
+          {activity.length ? (
+            <ul className="ad-activity">
+              {activity.map((item) => (
+                <li key={item.key}>
+                  <div className={`ad-act-icon ${item.tone}`}>{item.icon}</div>
+                  <div className="ad-act-main">
+                    <div className="ad-act-title">{item.title}</div>
+                    <div className="ad-act-sub">{item.sub}</div>
+                  </div>
+                  <div className="ad-act-time">{fmtDate(item.at)}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No activity yet.</p>
+          )}
         </div>
       </div>
 
-      <div className="grid-2">
-        <Card title="Recent dumping reports">
-          <Table columns={[
-            { key: 'ticket_no', label: '#' },
-            { key: 'location', label: 'Location' },
-            { key: 'status', label: 'Status', render: (r) => <span className={`badge s-${r.status}`}>{cap(r.status)}</span> },
-          ]} rows={recent} empty="No recent reports." />
-        </Card>
-        <Card title="Collections in the next 7 days">
-          {upcoming.length ? (
-            <Table columns={[
-              { key: 'name', label: 'Route' },
-              { key: 'route_date', label: 'Date' },
-              { key: 'status', label: 'Status', render: (r) => cap(r.status) },
-            ]} rows={upcoming} />
-          ) : <p className="muted">No collections scheduled this week.</p>}
-        </Card>
+      <div className="ad-row">
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>Recent dumping reports</h3>
+          </div>
+          <Table
+            columns={[
+              { key: 'ticket_no', label: '#' },
+              { key: 'location', label: 'Location' },
+              { key: 'status', label: 'Status', render: (r) => <span className={`badge s-${r.status}`}>{cap(r.status)}</span> },
+            ]}
+            rows={recentReports}
+            empty="No recent reports."
+          />
+        </div>
+
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>Quick Actions</h3>
+          </div>
+          <div className="ad-quick">
+            {QUICK_ACTIONS.map(([key, icon, label, tone]) => (
+              <button
+                key={key}
+                type="button"
+                className={`ad-quick-btn ${tone}`}
+                onClick={() => onNavigate(key)}
+              >
+                <span>{icon}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="points-section">
-        <Card title="Drop-off hubs">
-          <Table columns={[
+      <div className="ad-row">
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>Recent generated reports</h3>
+            <button className="btn ghost small" type="button" onClick={() => onNavigate('reports')}>
+              See All →
+            </button>
+          </div>
+          <Table
+            columns={[
+              { key: 'title', label: 'Report Title' },
+              { key: 'created_at', label: 'Date Generated', render: (r) => fmtDate(r.created_at) },
+              {
+                key: 'act',
+                label: 'Action',
+                render: (r) => (
+                  <span className="row">
+                    <button className="btn small" type="button" onClick={() => pdfReport(r)}>PDF</button>
+                    <button className="btn small ghost" type="button" onClick={() => csvReport(r)}>CSV</button>
+                  </span>
+                ),
+              },
+            ]}
+            rows={recentGenerated}
+            empty="No reports generated yet."
+          />
+        </div>
+
+        <div className="ad-card">
+          <div className="ad-card-head">
+            <h3>Collections in the next 7 days</h3>
+          </div>
+          {upcoming.length ? (
+            <Table
+              columns={[
+                { key: 'name', label: 'Route' },
+                { key: 'route_date', label: 'Date' },
+                { key: 'status', label: 'Status', render: (r) => cap(r.status) },
+              ]}
+              rows={upcoming}
+            />
+          ) : (
+            <p className="muted">No collections scheduled this week.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="ad-card">
+        <div className="ad-card-head">
+          <h3>Drop-off hubs</h3>
+        </div>
+        <Table
+          columns={[
             { key: 'name', label: 'Name' },
             { key: 'address', label: 'Address', render: (r) => r.address || <span className="muted">Not set</span> },
-          ]} rows={hubs.data?.hubs || []} empty="No drop-off hubs yet." />
-        </Card>
+          ]}
+          rows={hubs.data?.hubs || []}
+          empty="No drop-off hubs yet."
+        />
+      </div>
+
+      <div className="ad-banner">
+        <div>
+          <h3>Reduce. Reuse. Recycle.</h3>
+          <p>A sustainable future starts with us.</p>
+        </div>
+        <span className="ad-banner-icon">♻️</span>
       </div>
     </>
   );
 }
+
+// ==========================================
+// COLLECTION SCHEDULES
+// ==========================================
+
+const REMINDER_TIMINGS = [
+  ['tomorrow', 'Tomorrow'],
+  ['in_2_days', 'In 2 days'],
+];
+
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WASTE_TYPES = ['biodegradable', 'recyclable', 'residual', 'special'];
 
 function Schedules() {
   const list = useLoader(() => api('/schedules'));
@@ -124,7 +409,12 @@ function Schedules() {
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
-  const [remind, setRemind] = useState({ zone: '', when: 'tomorrow' });
+  const [remind, setRemind] = useState({ zone: '', timing: 'tomorrow', note: '' });
+  const [remindMsg, setRemindMsg] = useState({ kind: 'info', text: '' });
+  const [sending, setSending] = useState(false);
+
+  const schedules = list.data?.schedules || [];
+  const zones = [...new Set(schedules.map((s) => s.zone))].sort();
 
   async function save(e) {
     e.preventDefault();
@@ -132,50 +422,196 @@ function Schedules() {
       if (editing) await api(`/schedules/${editing}`, { method: 'PUT', body: form });
       else await api('/schedules', { method: 'POST', body: form });
       setMsg({ kind: 'success', text: 'Schedule saved.' });
-      setForm(blank); setEditing(null); list.reload();
-    } catch (err) { setMsg({ kind: 'error', text: err.message }); }
+      setForm(blank);
+      setEditing(null);
+      list.reload();
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message });
+    }
   }
+
   async function remove(id) {
     if (!confirm('Delete this schedule?')) return;
-    await api(`/schedules/${id}`, { method: 'DELETE' }); list.reload();
+    try {
+      await api(`/schedules/${id}`, { method: 'DELETE' });
+      list.reload();
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message });
+    }
   }
+
   async function sendReminders(e) {
     e.preventDefault();
+    const timingLabel = REMINDER_TIMINGS.find(([k]) => k === remind.timing)?.[1] || remind.timing;
+    if (!confirm(`Send a "${timingLabel}" pickup reminder to residents in ${remind.zone}?`)) return;
+
+    setSending(true);
+    setRemindMsg({ kind: 'info', text: '' });
     try {
-      const d = await api('/schedules/remind', { method: 'POST', body: remind });
-      setMsg({ kind: 'success', text: `Reminders queued for ${d.queued} residents.` });
-    } catch (err) { setMsg({ kind: 'error', text: err.message }); }
+      const d = await api('/schedules/remind', {
+        method: 'POST',
+        body: { zone: remind.zone, timing: remind.timing, note: remind.note.trim() },
+      });
+
+      if (d.message) {
+        setRemindMsg({ kind: 'info', text: d.message });
+      } else {
+        setRemindMsg({
+          kind: d.failed ? 'error' : 'success',
+          text: `Sent to ${d.sent} of ${d.queued} residents${d.failed ? ` (${d.failed} failed)` : ''}.`,
+        });
+      }
+      if (!d.failed) setRemind((r) => ({ ...r, note: '' }));
+    } catch (err) {
+      setRemindMsg({ kind: 'error', text: err.message });
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
     <div className="grid-2">
-      <Card title={editing ? 'Edit schedule' : 'Add collection schedule'}>
-        <Notice kind={msg.kind}>{msg.text}</Notice>
-        <form className="stack" onSubmit={save}>
-          <label>Zone / barangay<input value={form.zone} onChange={(e) => setForm({ ...form, zone: e.target.value })} required /></label>
-          <label>Day<select value={form.collection_day} onChange={(e) => setForm({ ...form, collection_day: e.target.value })}>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <option key={d}>{d}</option>)}</select></label>
-          <label>Time slot<input value={form.time_slot} onChange={(e) => setForm({ ...form, time_slot: e.target.value })} required /></label>
-          <label>Waste type<select value={form.waste_type} onChange={(e) => setForm({ ...form, waste_type: e.target.value })}>
-            {['biodegradable', 'recyclable', 'residual', 'special'].map((w) => <option key={w} value={w}>{cap(w)}</option>)}</select></label>
-          <div className="row"><button className="btn primary">{editing ? 'Update' : 'Add schedule'}</button>
-            {editing && <button type="button" className="btn ghost" onClick={() => { setEditing(null); setForm(blank); }}>Cancel</button>}</div>
-        </form>
-        <h3>Send SMS / email reminders</h3>
-        <form className="row" onSubmit={sendReminders}>
-          <input placeholder="Zone" value={remind.zone} onChange={(e) => setRemind({ ...remind, zone: e.target.value })} required />
-          <input placeholder="When (e.g. tomorrow)" value={remind.when} onChange={(e) => setRemind({ ...remind, when: e.target.value })} />
-          <button className="btn">Send</button>
-        </form>
-      </Card>
+      <div className="stack">
+        <Card title={editing ? 'Edit schedule' : 'Add collection schedule'}>
+          <Notice kind={msg.kind}>{msg.text}</Notice>
+          <form className="stack" onSubmit={save}>
+            <label>
+              Zone / barangay
+              <input
+                value={form.zone}
+                onChange={(e) => setForm({ ...form, zone: e.target.value })}
+                required
+              />
+            </label>
+
+            <label>
+              Day
+              <select
+                value={form.collection_day}
+                onChange={(e) => setForm({ ...form, collection_day: e.target.value })}
+              >
+                {WEEKDAYS.map((d) => <option key={d}>{d}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Time slot
+              <input
+                value={form.time_slot}
+                onChange={(e) => setForm({ ...form, time_slot: e.target.value })}
+                required
+              />
+            </label>
+
+            <label>
+              Waste type
+              <select
+                value={form.waste_type}
+                onChange={(e) => setForm({ ...form, waste_type: e.target.value })}
+              >
+                {WASTE_TYPES.map((w) => (
+                  <option key={w} value={w}>{cap(w)}</option>
+                ))}
+              </select>
+            </label>
+
+            <div className="row">
+              <button className="btn primary">{editing ? 'Update' : 'Add schedule'}</button>
+              {editing && (
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => { setEditing(null); setForm(blank); }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </Card>
+
+        <Card title="Send pickup reminder to residents">
+          <Notice kind={remindMsg.kind}>{remindMsg.text}</Notice>
+          <form className="stack" onSubmit={sendReminders}>
+            <label>
+              Zone / barangay
+              <select
+                value={remind.zone}
+                onChange={(e) => setRemind({ ...remind, zone: e.target.value })}
+                required
+              >
+                <option value="">Select a zone…</option>
+                {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+              </select>
+            </label>
+
+            <label>
+              When is the pickup?
+              <select
+                value={remind.timing}
+                onChange={(e) => setRemind({ ...remind, timing: e.target.value })}
+              >
+                {REMINDER_TIMINGS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Additional note (optional)
+              <textarea
+                rows={3}
+                maxLength={500}
+                placeholder="e.g. Please place your bins by the gate before 7 AM."
+                value={remind.note}
+                onChange={(e) => setRemind({ ...remind, note: e.target.value })}
+              />
+            </label>
+
+            <p className="muted">
+              Residents with an email in this zone will receive the reminder.
+              It is only sent if the zone has a collection on that day.
+            </p>
+
+            <button className="btn primary" disabled={sending || !remind.zone}>
+              {sending ? 'Sending…' : 'Send email reminder'}
+            </button>
+          </form>
+        </Card>
+      </div>
+
       <Card title="All schedules">
-        <Table columns={[
-          { key: 'zone', label: 'Zone' }, { key: 'collection_day', label: 'Day' }, { key: 'time_slot', label: 'Time' },
-          { key: 'waste_type', label: 'Type', render: (r) => cap(r.waste_type) },
-          { key: 'act', label: '', render: (r) => (<span className="row">
-            <button className="btn small" onClick={() => { setEditing(r.id); setForm({ zone: r.zone, collection_day: r.collection_day, time_slot: r.time_slot, waste_type: r.waste_type }); }}>Edit</button>
-            <button className="btn small danger" onClick={() => remove(r.id)}>Delete</button></span>) },
-        ]} rows={list.data?.schedules} />
+        <Table
+          columns={[
+            { key: 'zone', label: 'Zone' },
+            { key: 'collection_day', label: 'Day' },
+            { key: 'time_slot', label: 'Time' },
+            { key: 'waste_type', label: 'Type', render: (r) => cap(r.waste_type) },
+            {
+              key: 'act',
+              label: '',
+              render: (r) => (
+                <span className="row">
+                  <button
+                    className="btn small"
+                    onClick={() => {
+                      setEditing(r.id);
+                      setForm({
+                        zone: r.zone,
+                        collection_day: r.collection_day,
+                        time_slot: r.time_slot,
+                        waste_type: r.waste_type,
+                      });
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button className="btn small danger" onClick={() => remove(r.id)}>Delete</button>
+                </span>
+              ),
+            },
+          ]}
+          rows={schedules}
+          empty="No schedules yet."
+        />
       </Card>
     </div>
   );
@@ -318,7 +754,7 @@ function Users() {
   const [roleFilter, setRoleFilter] = useState('');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(EMPTY_USER);
-  const [editing, setEditing] = useState(null); // user object being edited
+  const [editing, setEditing] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [pwTarget, setPwTarget] = useState(null);
   const [newPw, setNewPw] = useState('');
@@ -341,7 +777,7 @@ function Users() {
       users.reload();
       return true;
     } catch (err) {
-      setMsg({ kind: 'error', text: err.message || 'May error. Subukan muli.' });
+      setMsg({ kind: 'error', text: err.message || 'Something went wrong. Please try again.' });
       return false;
     } finally {
       setBusy(false);
@@ -396,7 +832,7 @@ function Users() {
   }
 
   async function remove(u) {
-    if (!confirm(`Delete ${u.name}? Hindi na ito mababawi.`)) return;
+    if (!confirm(`Delete ${u.name}? This cannot be undone.`)) return;
     const ok = await run(
       () => api(`/admin/users/${u.id}`, { method: 'DELETE' }),
       `${u.name} deleted.`
@@ -461,7 +897,7 @@ function Users() {
           </Card>
         ) : (
           <Card title="Edit or reset">
-            <p className="muted">Pumili ng user sa listahan para i-edit, i-reset ang password, i-activate o i-deactivate, o burahin.</p>
+            <p className="muted">Select a user from the list to edit, reset the password, activate or deactivate, or delete.</p>
           </Card>
         )}
       </div>
@@ -509,7 +945,7 @@ function Users() {
             },
           ]}
           rows={visible}
-          empty="Walang user na tumutugma."
+          empty="No users match your search."
         />
       </Card>
     </div>
@@ -527,7 +963,7 @@ const REWARD_CATEGORIES = [
 const STATUS_LABEL = { available: 'Available', low: 'Low Stock', out: 'Out of Stock' };
 const STATUS_CLASS = { available: 's-approved', low: 's-pending', out: 's-rejected' };
 
-// Available, Low Stock, o Out of Stock base sa dami ng stock at minimum level
+// Available, Low Stock, or Out of Stock based on stock quantity and minimum level
 function stockStatus(r) {
   const avail = Number(r.quantity_available ?? 0);
   const min = Number(r.min_stock ?? 0);
@@ -616,7 +1052,7 @@ function RewardsInventory() {
   }
 
   async function remove(r) {
-    if (!confirm(`Delete "${r.name}"? Hindi na ito lalabas sa mga resident.`)) return;
+    if (!confirm(`Delete "${r.name}"? It will no longer appear to residents.`)) return;
     try {
       await api(`/rewards/${r.id}`, { method: 'DELETE' });
       if (editing === r.id) cancelEdit();
@@ -658,8 +1094,8 @@ function RewardsInventory() {
               {lowAlerts.map((r) => (
                 <Notice key={r.id} kind={r._status === 'out' ? 'error' : 'info'}>
                   <strong>{r.name}</strong>: {r._status === 'out'
-                    ? 'Out of stock. Mag-restock o i-hide ang reward.'
-                    : `${r.quantity_available} na lang (minimum ${r.min_stock}).`}
+                    ? 'Out of stock. Restock or hide this reward.'
+                    : `${r.quantity_available} left (minimum ${r.min_stock}).`}
                 </Notice>
               ))}
             </div>
@@ -681,7 +1117,7 @@ function RewardsInventory() {
             {form.image_url && (
               <img
                 src={form.image_url}
-                alt="Preview ng reward"
+                alt="Reward preview"
                 style={{ width: '100%', maxWidth: 200, borderRadius: 12, objectFit: 'cover' }}
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
@@ -726,13 +1162,13 @@ function RewardsInventory() {
 
         <Card title="Reward status guide">
           <div className="stack">
-            <p className="muted">Awtomatikong nakukuha ang status base sa available stock at minimum stock:</p>
-            <div className="row"><span className="badge s-approved">Available</span><span className="muted">Mas mataas sa minimum</span></div>
-            <div className="row"><span className="badge s-pending">Low Stock</span><span className="muted">Katumbas o mas mababa sa minimum</span></div>
-            <div className="row"><span className="badge s-rejected">Out of Stock</span><span className="muted">Wala nang stock</span></div>
+            <p className="muted">Status is set automatically based on available stock and minimum stock:</p>
+            <div className="row"><span className="badge s-approved">Available</span><span className="muted">Above minimum</span></div>
+            <div className="row"><span className="badge s-pending">Low Stock</span><span className="muted">At or below minimum</span></div>
+            <div className="row"><span className="badge s-rejected">Out of Stock</span><span className="muted">No stock left</span></div>
             <p className="muted">
-              Awtomatikong binabawasan ng system ang stock tuwing may successful redemption.
-              Hindi ito binabago nang manu-mano dito.
+              Stock is reduced automatically after each successful redemption.
+              It is not edited manually here.
             </p>
           </div>
         </Card>
@@ -795,7 +1231,7 @@ function RewardsInventory() {
             },
           ]}
           rows={visible}
-          empty={filter ? 'Walang rewards sa status na ito.' : 'Wala pang rewards. Mag-add ng bago sa itaas.'}
+          empty={filter ? 'No rewards with this status.' : 'No rewards yet. Add one above.'}
         />
       </Card>
 
@@ -817,7 +1253,7 @@ function RewardsInventory() {
             },
           ]}
           rows={history}
-          empty="Wala pang redemption."
+          empty="No redemptions yet."
         />
       </Card>
     </div>
@@ -843,15 +1279,15 @@ const STATUS_OPTIONS = ['pending', 'completed', 'missed', 'open', 'investigating
 const PERIODS = [['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly'], ['yearly', 'Yearly']];
 const FORMATS = [['pdf', 'PDF'], ['excel', 'Excel (CSV)']];
 
-// Assumption: bahagi ng recovered recyclables na itinuturing na na-divert sa landfill. Ayusin ayon sa datos ng LGU.
+// Assumption: share of recovered recyclables treated as diverted from landfill. Adjust to LGU data.
 const DIVERSION_RATE = 0.8;
 
 const EMPTY_FILTERS = { from: '', to: '', barangay: '', category: '', status: '', driver: '' };
 
-// Kulay ng mga chart. Pumipili ayon sa index ng series o slice.
+// Chart colors. Picked by series or slice index.
 const CHART_COLORS = ['#4a7c3a', '#3b5b9a', '#e0b93c', '#d9534f', '#8e6bbf', '#2a9d8f', '#f08a4b'];
 
-// Paano i-chart ang bawat table sa section. Ang index ay tumutugma sa tables[section][index].
+// How each table is charted. The index matches tables[section][index].
 const CHART_SPECS = {
   overview: [
     { type: 'hbar', x: 'metric', series: ['value'] },
@@ -903,7 +1339,7 @@ const kgBy = (arr, fn) => arr.reduce((m, x) => {
 const topN = (obj, n = 5) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
 const cols = (obj) => Object.entries(obj).map(([key, label]) => ({ key, label }));
 
-// Tinutukoy ang date range base sa napiling period
+// Date range based on the selected period
 function periodRange(period) {
   const now = new Date();
   const start = new Date(now);
@@ -913,7 +1349,7 @@ function periodRange(period) {
   return { from: isoLocal(start), to: isoLocal(now) };
 }
 
-// Iisang pinagmumulan ng lahat ng report tables: ginagamit ng screen, CSV, PDF, at history
+// Single source of all report tables: used by screen, CSV, PDF, and history
 function buildTables(data, f) {
   const { drops, routes, reports, reds, rewardList, collectorList, residentList } = data;
   const nameOf = (id) => collectorList.find((c) => String(c.id) === String(id))?.name || 'Unassigned';
@@ -950,7 +1386,7 @@ function buildTables(data, f) {
   const kgTotal = numSum(fDrops, (d) => d.weight_kg);
   const completed = stops.filter((s) => s.status === 'completed').length;
 
-  // Collections per barangay at driver
+  // Collections per barangay and driver
   const groups = {};
   stops.forEach((s) => {
     const k = `${s.barangay}|${s.driver}`;
@@ -1078,12 +1514,6 @@ function buildTables(data, f) {
 
 // ---------- Export helpers ----------
 
-function escapeHtml(v) {
-  return String(v ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
-
 function tablesToCsv(tables) {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   return tables
@@ -1104,39 +1534,56 @@ function downloadFile(name, content, type) {
   URL.revokeObjectURL(url);
 }
 
-// Nagbubukas ng printable page; sa print dialog, piliin ang "Save as PDF"
-function openPrintable(title, meta, tables) {
-  const w = window.open('', '_blank');
-  if (!w) return false;
-  const body = tables.map((t) => `
-    <h2>${escapeHtml(t.title)}</h2>
-    <table>
-      <thead><tr>${t.cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
-      <tbody>${t.rows.length
-        ? t.rows.map((r) => `<tr>${t.cols.map((c) => `<td>${escapeHtml(r[c.key])}</td>`).join('')}</tr>`).join('')
-        : `<tr><td colspan="${t.cols.length}">No data</td></tr>`}</tbody>
-    </table>`).join('');
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
-    <style>
-      body{font-family:Arial,sans-serif;padding:24px;color:#1f2d1f}
-      h1{font-size:20px;margin-bottom:4px} p.meta{color:#555;font-size:12px}
-      h2{font-size:15px;margin-top:24px}
-      table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}
-      th,td{border:1px solid #bbb;padding:6px;text-align:left}
-      th{background:#eef5e6}
-    </style></head><body>
-    <h1>${escapeHtml(title)}</h1>
-    <p class="meta">${escapeHtml(meta)}</p>
-    ${body}
-    <script>window.onload=()=>window.print();<\/script>
-  </body></html>`);
-  w.document.close();
-  return true;
+// Builds a real PDF file and downloads it directly (no print dialog)
+function downloadPdf(title, meta, tables, filename) {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(31, 45, 31);
+  doc.text(title, 40, 50);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(85, 85, 85);
+  doc.text(meta, 40, 68);
+
+  let y = 90;
+
+  tables.forEach((t) => {
+    if (y > 740) {
+      doc.addPage();
+      y = 50;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(31, 45, 31);
+    doc.text(t.title, 40, y);
+
+    autoTable(doc, {
+      startY: y + 8,
+      head: [t.cols.map((c) => c.label)],
+      body: t.rows.length
+        ? t.rows.map((r) => t.cols.map((c) => String(r[c.key] ?? '')))
+        : [[{ content: 'No data', colSpan: t.cols.length }]],
+      styles: { fontSize: 9, cellPadding: 5, font: 'helvetica' },
+      headStyles: { fillColor: [46, 122, 79], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 247, 239] },
+      margin: { left: 40, right: 40 },
+      tableWidth: pageWidth - 80,
+    });
+
+    y = doc.lastAutoTable.finalY + 28;
+  });
+
+  doc.save(filename);
 }
 
 // ---------- Chart ----------
 
-// Ginagawang chart ang isang table ayon sa spec. Ang "cols" ang nagbibigay ng label ng bawat series.
+// Turns a table into a chart based on the spec. cols provides the label for each series.
 function ChartView({ spec, cols: tableCols, rows }) {
   const data = rows.map((r) => {
     const o = { ...r };
@@ -1145,7 +1592,7 @@ function ChartView({ spec, cols: tableCols, rows }) {
   });
 
   if (!data.length) {
-    return <p className="muted">Walang datos para sa chart.</p>;
+    return <p className="muted">No data for the chart.</p>;
   }
 
   const nameOf = (k) => tableCols.find((c) => c.key === k)?.label || k;
@@ -1351,7 +1798,7 @@ function ReportGenerate({ data, filters, onSaved }) {
 
   async function generate() {
     if (!cats.length) {
-      setMsg({ kind: 'error', text: 'Pumili ng kahit isang category.' });
+      setMsg({ kind: 'error', text: 'Select at least one category.' });
       return;
     }
 
@@ -1362,14 +1809,18 @@ function ReportGenerate({ data, filters, onSaved }) {
     const title = `EcoBin ${PERIODS.find(([p]) => p === period)[1]} Report`;
     const meta = `Period: ${range.from} to ${range.to}${filters.barangay ? ` · Barangay: ${filters.barangay}` : ''}`;
 
-    if (format === 'excel') {
-      downloadFile(
-        `ecobin-report-${period}-${range.to}.csv`,
-        '\uFEFF' + tablesToCsv(tables),
-        'text/csv;charset=utf-8'
-      );
-    } else if (!openPrintable(title, meta, tables)) {
-      setMsg({ kind: 'error', text: 'Pinigilan ng browser ang popup. Payagan ito at subukan muli.' });
+    try {
+      if (format === 'excel') {
+        downloadFile(
+          `ecobin-report-${period}-${range.to}.csv`,
+          '\uFEFF' + tablesToCsv(tables),
+          'text/csv;charset=utf-8'
+        );
+      } else {
+        downloadPdf(title, meta, tables, `ecobin-report-${period}-${range.to}.pdf`);
+      }
+    } catch (err) {
+      setMsg({ kind: 'error', text: `Unable to generate the file: ${err.message}` });
       return;
     }
 
@@ -1382,10 +1833,10 @@ function ReportGenerate({ data, filters, onSaved }) {
           from: range.from, to: range.to, filters, tables,
         },
       });
-      setMsg({ kind: 'success', text: 'Na-generate ang report at na-save sa history.' });
+      setMsg({ kind: 'success', text: 'Report downloaded and saved to history.' });
       onSaved?.();
     } catch (err) {
-      setMsg({ kind: 'error', text: `Na-generate ang report pero hindi na-save sa history: ${err.message}` });
+      setMsg({ kind: 'error', text: `Report downloaded but not saved to history: ${err.message}` });
     } finally {
       setBusy(false);
     }
@@ -1395,7 +1846,7 @@ function ReportGenerate({ data, filters, onSaved }) {
     <Card title="Generate report">
       <Notice kind={msg.kind}>{msg.text}</Notice>
 
-      <p className="muted">Ang mga filter sa itaas ay ginagamit sa report. Ang period ang nagtatakda ng date range.</p>
+      <p className="muted">The filters above are applied to the report. The period sets the date range.</p>
 
       <div className="stack">
         <span>Categories</span>
@@ -1421,7 +1872,7 @@ function ReportGenerate({ data, filters, onSaved }) {
       </div>
 
       <button className="btn primary" type="button" disabled={busy} onClick={generate}>
-        {busy ? 'Saving…' : 'Generate report'}
+        {busy ? 'Saving…' : 'Generate & download'}
       </button>
     </Card>
   );
@@ -1431,13 +1882,15 @@ function ReportHistory({ history }) {
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const list = history.data?.reports || [];
 
-  function view(r) {
-    if (!openPrintable(r.title, `Period: ${r.from} to ${r.to}`, r.tables || [])) {
-      setMsg({ kind: 'error', text: 'Pinigilan ng browser ang popup.' });
+  function pdf(r) {
+    try {
+      downloadPdf(r.title, `Period: ${r.from} to ${r.to}`, r.tables || [], `ecobin-report-${r.period}-${r.to}.pdf`);
+    } catch (err) {
+      setMsg({ kind: 'error', text: `Unable to generate PDF: ${err.message}` });
     }
   }
 
-  function download(r) {
+  function csv(r) {
     downloadFile(
       `ecobin-report-${r.period}-${r.to}.csv`,
       '\uFEFF' + tablesToCsv(r.tables || []),
@@ -1456,8 +1909,8 @@ function ReportHistory({ history }) {
           { key: 'format', label: 'Format', render: (r) => (r.format === 'excel' ? 'Excel (CSV)' : 'PDF') },
           { key: 'act', label: '', render: (r) => (
             <span className="row">
-              <button className="btn small" onClick={() => view(r)}>View / PDF</button>
-              <button className="btn small ghost" onClick={() => download(r)}>Download CSV</button>
+              <button className="btn small" onClick={() => pdf(r)}>Download PDF</button>
+              <button className="btn small ghost" onClick={() => csv(r)}>Download CSV</button>
             </span>) },
         ]}
         rows={list}
