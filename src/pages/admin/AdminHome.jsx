@@ -405,6 +405,7 @@ const WASTE_TYPES = ['biodegradable', 'recyclable', 'residual', 'special'];
 
 function Schedules() {
   const list = useLoader(() => api('/schedules'));
+  const residents = useLoader(() => api('/admin/users?role=resident'));
   const blank = { zone: '', collection_day: 'Mon', time_slot: '7:00–11:00 AM', waste_type: 'biodegradable' };
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState(null);
@@ -414,7 +415,12 @@ function Schedules() {
   const [sending, setSending] = useState(false);
 
   const schedules = list.data?.schedules || [];
-  const zones = [...new Set(schedules.map((s) => s.zone))].sort();
+  const residentList = residents.data?.users || [];
+  const zones = [...new Set([
+    ...schedules.map((s) => s.zone),
+    ...residentList.map((r) => r.barangay).filter(Boolean),
+  ])].sort();
+  const zoneRecipients = residentList.filter((r) => r.barangay === remind.zone && r.email);
 
   async function save(e) {
     e.preventDefault();
@@ -567,8 +573,9 @@ function Schedules() {
             </label>
 
             <p className="muted">
-              Residents with an email in this zone will receive the reminder.
-              It is only sent if the zone has a collection on that day.
+              {remind.zone
+                ? `${zoneRecipients.length} resident${zoneRecipients.length === 1 ? '' : 's'} in ${remind.zone} will receive this email reminder.`
+                : 'Residents with an email in the selected zone will receive the reminder.'}
             </p>
 
             <button className="btn primary" disabled={sending || !remind.zone}>
