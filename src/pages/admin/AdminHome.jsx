@@ -412,6 +412,7 @@ function Schedules() {
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const [remind, setRemind] = useState({ zone: '', timing: 'tomorrow', note: '' });
+  const [zoneOpen, setZoneOpen] = useState(false);
   const [remindMsg, setRemindMsg] = useState({ kind: 'info', text: '' });
   const [sending, setSending] = useState(false);
 
@@ -545,19 +546,41 @@ function Schedules() {
             <div className="remind-grid">
               <label>
                 Zone / barangay
-                <input
-                  list="zone-suggestions"
-                  value={remind.zone}
-                  onChange={(e) => setRemind({ ...remind, zone: e.target.value })}
-                  placeholder="Type a zone or barangay…"
-                  autoComplete="off"
-                  required
-                />
-                <datalist id="zone-suggestions">
-                  {zones.map((z) => (
-                    <option key={z} value={z} />
-                  ))}
-                </datalist>
+                <div className="zone-combo">
+                  <input
+                    value={remind.zone}
+                    onChange={(e) => { setRemind({ ...remind, zone: e.target.value }); setZoneOpen(true); }}
+                    onFocus={() => setZoneOpen(true)}
+                    onBlur={() => setTimeout(() => setZoneOpen(false), 150)}
+                    placeholder="Type a zone or barangay…"
+                    autoComplete="off"
+                    required
+                  />
+                  {zoneOpen && (() => {
+                    const q = (remind.zone || '').trim().toLowerCase();
+                    const matches = zones.filter((z) => !q || z.toLowerCase().includes(q)).slice(0, 8);
+                    if (!matches.length) return null;
+                    return (
+                      <ul className="zone-suggestions" role="listbox">
+                        {matches.map((z) => (
+                          <li key={z} role="option">
+                            <button
+                              type="button"
+                              className="zone-suggestion"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setRemind({ ...remind, zone: z });
+                                setZoneOpen(false);
+                              }}
+                            >
+                              {z}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
+                </div>
               </label>
 
               <label>
