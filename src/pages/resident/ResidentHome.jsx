@@ -413,56 +413,64 @@ function Overview({ onNavigate }) {
 function Schedule() {
   const { user } = useAuth();
   const schedules = useLoader(() => api('/schedules'));
-  const routes = useLoader(() => api('/routes'));
 
   return (
     <div className="grid-2">
       <CollectionScheduleCard schedules={schedules} zone={user.barangay} />
-      <PickupCard routes={routes} />
+      <RecyclablesCard schedules={schedules} zone={user.barangay} />
     </div>
   );
 }
 
-function PickupCard({ routes }) {
-  const pickups = (routes.data?.routes || []).flatMap((r) =>
-    (r.stops || []).map((s) => ({
-      ...s,
-      route: r.name,
-      date: r.route_date
-    }))
-  );
+function RecyclablesCard({ schedules, zone }) {
+  const rows = (schedules.data?.schedules || []).filter((s) => s.waste_type === 'recyclable');
+  const zoneQuery = (zone || '').trim().toLowerCase();
+  const onlyBarangay = zoneQuery
+    ? rows.filter((s) => String(s.zone || '').trim().toLowerCase() === zoneQuery)
+    : rows;
 
   return (
-    <Card title="Your pickup schedule">
-      {routes.loading ? (
-        <p className="muted">Loading pickups…</p>
-      ) : routes.error ? (
-        <Notice kind="error">{routes.error}</Notice>
+    <Card
+      title="Recyclables pickup"
+      actions={
+        <button className="btn ghost" type="button" onClick={() => schedules.reload()}>
+          Refresh
+        </button>
+      }
+    >
+      {schedules.loading ? (
+        <p className="muted">Loading recyclables pickup…</p>
+      ) : schedules.error ? (
+        <Notice kind="error">{schedules.error}</Notice>
       ) : (
-        <Table
-          columns={[
-            { key: 'route', label: 'Route' },
-            { key: 'date', label: 'Pickup date' },
-            { key: 'address', label: 'Pickup location' },
-            {
-              key: 'status',
-              label: 'Pickup status',
-              render: (r) => (
-                <span className={`badge s-${r.status}`}>
-                  {cap(r.status)}
-                </span>
-              )
-            }
-          ]}
-          rows={pickups}
-          empty="No pickup routes have been published yet."
-        />
+        <>
+          <p className="muted">
+            Schedule for recyclables collection{zone ? ` in ${zone}` : ' in your barangay'}.
+          </p>
+          <Table
+            columns={[
+              { key: 'collection_day', label: 'Day' },
+              { key: 'time_slot', label: 'Time' },
+              { key: 'waste_type', label: 'Bin / type', render: (r) => cap(r.waste_type) }
+            ]}
+            rows={onlyBarangay}
+            empty="No recyclables pickup scheduled for your barangay yet."
+          />
+          <p className="muted">
+            Sort your recyclables in the blue bin and place them by the gate on pickup day.
+          </p>
+        </>
       )}
     </Card>
   );
 }
 
 function CollectionScheduleCard({ schedules, zone }) {
+  const zoneQuery = (zone || '').trim().toLowerCase();
+  const onlyBarangay = (schedules.data?.schedules || [])
+    .filter((s) => s.waste_type !== 'recyclable')
+    .filter((s) => !zoneQuery || String(s.zone || '').trim().toLowerCase() === zoneQuery);
+
   return (
     <Card
       title={`Collection schedule${zone ? ` for ${zone}` : ' for your barangay'}`}
@@ -488,13 +496,14 @@ function CollectionScheduleCard({ schedules, zone }) {
               render: (r) => cap(r.waste_type)
             }
           ]}
-          rows={schedules.data?.schedules || []}
+          rows={onlyBarangay}
           empty="No schedule published for your barangay yet."
         />
       )}
 
       <p className="muted">
-        You'll receive SMS and email reminders before each pickup.
+        Sort non-recyclable waste for your barangay's collection day. Recyclables have their own
+        pickup schedule on the card beside it.
       </p>
     </Card>
   );
