@@ -227,22 +227,32 @@
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  .ad-sidebar { position: static; height: auto; padding: 16px; }
+  .ad-sidebar { position: static; height: auto; padding: 14px; }
   .ad-brand { flex-direction: row; margin-bottom: 10px; }
   .ad-brand-tile { width: 44px; height: 44px; font-size: 22px; border-radius: 12px; }
   .ad-brand-name { font-size: 20px; }
   .ad-brand-tag { display: none; }
-  .ad-nav { display: flex; overflow-x: auto; gap: 6px; }
-  .ad-nav button { width: auto; }
+  .ad-nav { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+  .ad-nav button { width: auto; white-space: nowrap; padding: 8px 12px; font-size: 12px; }
   .ad-logout { margin-top: 8px; }
-  .ad-main { padding: 18px 16px 40px; }
+  .ad-main { padding: 16px 12px 32px; }
   .ad-topbar { flex-wrap: wrap; }
   .ad-date { display: none; }
   .ad-stats { grid-template-columns: 1fr; }
-  .ad-hero { padding: 22px; }
+  .ad-hero { padding: 20px 18px; }
   .ad-hero h1 { font-size: 28px; }
   .ad-quick { grid-template-columns: 1fr; }
+  .ad-banner { padding: 20px 18px; flex-direction: column; text-align: left; align-items: flex-start; gap: 10px; }
+  .ad-banner h3 { font-size: 20px; }
   .ad-banner-icon { display: none; }
+  .ad-page-body .card { padding: 16px; }
+}
+
+@media (max-width: 480px) {
+  .ad-hero h1 { font-size: 22px; }
+  .ad-banner h3 { font-size: 17px; }
+  .ad-nav button { padding: 7px 10px; gap: 4px; font-size: 12px; }
+  .ad-nav-icon { width: 18px; }
 }
 
 /* ==========================================
