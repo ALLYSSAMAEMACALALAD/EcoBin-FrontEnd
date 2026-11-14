@@ -7,15 +7,24 @@ const TOKEN_KEY = 'ecobin.tokens';
 const REQUEST_TIMEOUT_MS = 60000;
 const pendingGetRequests = new Map();
 
+// Auth tokens live in sessionStorage so a freshly opened tab/window (or a different
+// visitor on a shared computer) is NOT silently logged into the previous account.
+// The tab/window still keeps the session while it is open; closing it requires a fresh login.
+function clearLegacyLocalStorage() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+}
+
 export const tokenStore = {
   get() {
-    try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem(TOKEN_KEY) || 'null'); } catch { return null; }
   },
   set(tokens) {
-    try { localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens)); } catch { /* storage unavailable */ }
+    clearLegacyLocalStorage();
+    try { sessionStorage.setItem(TOKEN_KEY, JSON.stringify(tokens)); } catch { /* storage unavailable */ }
   },
   clear() {
-    try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    clearLegacyLocalStorage();
   },
 };
 

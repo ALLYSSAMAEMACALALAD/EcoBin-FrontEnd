@@ -31,6 +31,10 @@ export function AuthProvider({ children }) {
 
   // Restore the session on load; a 401 means the stored token is expired or revoked.
   useEffect(() => {
+    // Drop any legacy persistent token so a freshly opened page requires a fresh login.
+    // (Old builds stored the token in localStorage; sessionStorage is used now.)
+    try { localStorage.removeItem('ecobin.tokens'); } catch { /* ignore */ }
+
     const callback = readOAuthCallback();
     if (callback.error) setOauthError(callback.error);
     if (callback.tokens) tokenStore.set(callback.tokens);
