@@ -422,6 +422,7 @@ function Schedules() {
     ...residentList.map((r) => r.barangay).filter(Boolean),
   ])].sort();
   const zoneRecipients = residentList.filter((r) => r.barangay === remind.zone && r.email);
+  const zoneHasSchedule = schedules.some((s) => s.zone === remind.zone);
 
   async function save(e) {
     e.preventDefault();
@@ -548,7 +549,11 @@ function Schedules() {
                 required
               >
                 <option value="">Select a zone…</option>
-                {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+                {zones.map((z) => (
+                  <option key={z} value={z}>
+                    {z}{!schedules.some((s) => s.zone === z) ? ' — (no schedule)' : ''}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -573,13 +578,17 @@ function Schedules() {
               />
             </label>
 
-            <p className="muted">
-              {remind.zone
-                ? `${zoneRecipients.length} resident${zoneRecipients.length === 1 ? '' : 's'} in ${remind.zone} will receive this email reminder.`
-                : 'Residents with an email in the selected zone will receive the reminder.'}
-            </p>
+            {remind.zone && !zoneHasSchedule ? (
+              <Notice kind="error">No collection schedule is published for {remind.zone} yet. An email cannot be sent to residents without a scheduled pickup.</Notice>
+            ) : (
+              <p className="muted">
+                {remind.zone
+                  ? `${zoneRecipients.length} resident${zoneRecipients.length === 1 ? '' : 's'} in ${remind.zone} will receive this email reminder.`
+                  : 'Residents with an email in the selected zone will receive the reminder.'}
+              </p>
+            )}
 
-            <button className="btn primary" disabled={sending || !remind.zone}>
+            <button className="btn primary" disabled={sending || !remind.zone || !zoneHasSchedule}>
               {sending ? 'Sending…' : 'Send email reminder'}
             </button>
           </form>
