@@ -421,8 +421,9 @@ function Schedules() {
     ...schedules.map((s) => s.zone),
     ...residentList.map((r) => r.barangay).filter(Boolean),
   ])].sort();
-  const zoneRecipients = residentList.filter((r) => r.barangay === remind.zone && r.email);
-  const zoneHasSchedule = schedules.some((s) => s.zone === remind.zone);
+  const norm = (v) => String(v || '').trim().toLowerCase();
+  const zoneRecipients = residentList.filter((r) => norm(r.barangay) === norm(remind.zone) && r.email);
+  const zoneHasSchedule = !!remind.zone && schedules.some((s) => norm(s.zone) === norm(remind.zone));
 
   async function save(e) {
     e.preventDefault();
@@ -541,31 +542,34 @@ function Schedules() {
         <Card title="Send pickup reminder to residents">
           <Notice kind={remindMsg.kind}>{remindMsg.text}</Notice>
           <form className="stack" onSubmit={sendReminders}>
-            <label>
-              Zone / barangay
-              <select
-                value={remind.zone}
-                onChange={(e) => setRemind({ ...remind, zone: e.target.value })}
-                required
-              >
-                <option value="">Select a zone…</option>
-                {zones.map((z) => (
-                  <option key={z} value={z}>
-                    {z}{!schedules.some((s) => s.zone === z) ? ' — (no schedule)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="remind-grid">
+              <label>
+                Zone / barangay
+                <input
+                  list="zone-suggestions"
+                  value={remind.zone}
+                  onChange={(e) => setRemind({ ...remind, zone: e.target.value })}
+                  placeholder="Type a zone or barangay…"
+                  autoComplete="off"
+                  required
+                />
+                <datalist id="zone-suggestions">
+                  {zones.map((z) => (
+                    <option key={z} value={z} />
+                  ))}
+                </datalist>
+              </label>
 
-            <label>
-              When is the pickup?
-              <select
-                value={remind.timing}
-                onChange={(e) => setRemind({ ...remind, timing: e.target.value })}
-              >
-                {REMINDER_TIMINGS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-              </select>
-            </label>
+              <label>
+                When is the pickup?
+                <select
+                  value={remind.timing}
+                  onChange={(e) => setRemind({ ...remind, timing: e.target.value })}
+                >
+                  {REMINDER_TIMINGS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                </select>
+              </label>
+            </div>
 
             <label>
               Additional note (optional)
@@ -588,7 +592,7 @@ function Schedules() {
               </p>
             )}
 
-            <button className="btn primary" disabled={sending || !remind.zone || !zoneHasSchedule}>
+            <button className="btn primary block" disabled={sending || !remind.zone || !zoneHasSchedule}>
               {sending ? 'Sending…' : 'Send email reminder'}
             </button>
           </form>

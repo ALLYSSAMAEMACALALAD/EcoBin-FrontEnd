@@ -265,3 +265,15 @@
 /* Reward image field: input + upload button in one row */
 .reward-image-row { display: flex; gap: 10px; align-items: center; }
 .reward-image-row input { flex: 1; min-width: 0; }
+
+/* Reminder form: two columns on desktop, stacked on mobile */
+.remind-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .remind-grid { grid-template-columns: 1fr; }
+}
