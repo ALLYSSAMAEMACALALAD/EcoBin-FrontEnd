@@ -884,7 +884,9 @@
 
 html,body {
   max-width:100%;
-  overflow-x:hidden
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%
 }
 
 body {
@@ -1613,4 +1615,28 @@ img, video, canvas, iframe, object, embed { max-width: 100%; }
   .fp-mascot, .lg-mascot, .rg-mascot { font-size: 68px; }
   .hero h1 { font-size: 1.8rem !important; }
   .content > :not(.hero) { width: 100%; padding-left: 6px; padding-right: 6px; box-sizing: border-box; }
+}
+
+/* ---------- Small-screen auth cards (phones) ---------- */
+.fp-card, .lg-card, .rg-card { border-radius: 20px; }
+.fp-card > *, .lg-card > *, .rg-card > * { min-width: 0; }
+.fp-left, .fp-right, .lg-left, .lg-right, .rg-left, .rg-right { min-width: 0; }
+
+@media (max-width: 480px) {
+  .fp-page, .lg-page, .rg-page { padding: 16px 12px; }
+  .fp-left, .lg-left, .rg-left { padding: 28px 18px 26px !important; }
+  .fp-banner, .lg-banner, .rg-banner { font-size: .92rem; padding: 12px 14px; gap: 10px; border-radius: 14px; }
+  .fp-banner-icon, .lg-banner-icon, .rg-banner-icon { font-size: 19px; }
+  .fp-brand, .lg-brand, .rg-brand { font-size: 38px; }
+  .fp-tag, .lg-tag, .rg-tag { font-size: .9rem; }
+  .fp-title, .lg-title, .rg-title { font-size: 27px; }
+  .fp-sub, .lg-sub, .rg-sub { font-size: .92rem; }
+  .fp-btn-primary, .lg-btn-primary, .rg-btn-primary { font-size: 1.02rem; }
+}
+
+@media (max-width: 360px) {
+  .fp-page, .lg-page, .rg-page { padding: 10px 8px; }
+  .fp-left, .lg-left, .rg-left { padding: 22px 14px 20px !important; min-height: auto; }
+  .fp-mascot, .lg-mascot, .rg-mascot { font-size: 76px; margin-top: 14px; }
+  .fp-banner, .lg-banner, .rg-banner { font-size: .84rem; }
 }
