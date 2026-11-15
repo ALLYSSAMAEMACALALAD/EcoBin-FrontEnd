@@ -4,10 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eco-Bin</title>
-    <script type="module" crossorigin src="/assets/index-BjjYhDgp.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-ZiR2eLyk.css">
+    <script>
+      try {
+        if (localStorage.getItem('ecobin.theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch (e) {}
+    </script>
+    <script type="module" crossorigin src="/assets/index-BYlXYmQy.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CwMLSmce.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>

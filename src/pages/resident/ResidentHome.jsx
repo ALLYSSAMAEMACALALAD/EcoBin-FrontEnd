@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
-import { ThemeToggle } from '../../lib/theme.jsx';
 import {
   Card,
   Notice,
@@ -206,7 +205,6 @@ export default function ResidentHome() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </form>
-          <ThemeToggle className="rd-bell" />
           <NotificationBell onNavigate={setTab} />
           <div className="rd-user">
             <div className="rd-avatar">{initial}</div>
