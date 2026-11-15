@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -38,6 +38,7 @@ const QUICK_ACTIONS = [
 export default function AdminHome() {
   const { user, logout } = useAuth();
   const [tab, setTab] = useState('dashboard');
+  const [navOpen, setNavOpen] = useState(false);
 
   const firstName = (user?.name || '').split(' ')[0] || 'Admin';
   const initial = firstName.charAt(0).toUpperCase();
@@ -45,9 +46,20 @@ export default function AdminHome() {
   const dateLabel = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
   const weekday = now.toLocaleDateString('en-PH', { weekday: 'long' });
 
+  // Close the mobile drawer on Escape and prevent body scroll while it is open.
+  useEffect(() => {
+    if (!navOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [navOpen]);
+
+  const navTo = (key) => { setTab(key); setNavOpen(false); };
+
   return (
     <div className="ad-shell">
-      <aside className="ad-sidebar">
+      <aside className={`ad-sidebar${navOpen ? ' open' : ''}`}>
         <div className="ad-brand">
           <div className="ad-brand-tile">♻️</div>
           <div className="ad-brand-name">Eco<span>Bin</span></div>
@@ -60,7 +72,7 @@ export default function AdminHome() {
               key={key}
               type="button"
               className={tab === key ? 'active' : ''}
-              onClick={() => setTab(key)}
+              onClick={() => navTo(key)}
             >
               <span className="ad-nav-icon">{icon}</span>
               {label}
@@ -74,7 +86,12 @@ export default function AdminHome() {
         </button>
       </aside>
 
+      {navOpen && <div className="ad-overlay" onClick={() => setNavOpen(false)} aria-hidden="true" />}
+
       <main className="ad-main">
+        <button type="button" className="ad-burger" onClick={() => setNavOpen(v => !v)} aria-expanded={navOpen} aria-controls="ad-drawer">
+          <span aria-hidden="true">☰</span> Menu
+        </button>
         <header className="ad-topbar" style={{ justifyContent: 'flex-end' }}>
           <div className="ad-bell" aria-label="Notifications">
             🔔

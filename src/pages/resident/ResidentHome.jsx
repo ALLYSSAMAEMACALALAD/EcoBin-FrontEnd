@@ -130,6 +130,7 @@ export default function ResidentHome() {
   const { user, logout } = useAuth();
   const [tab, setTab] = useState('overview');
   const [query, setQuery] = useState('');
+  const [navOpen, setNavOpen] = useState(false);
 
   const firstName = (user?.name || '').split(' ')[0] || 'Resident';
   const initial = firstName.charAt(0).toUpperCase();
@@ -145,10 +146,20 @@ export default function ResidentHome() {
       setQuery('');
     }
   }
+  // Close the mobile drawer on Escape and prevent body scroll while it is open.
+  useEffect(() => {
+    if (!navOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [navOpen]);
+
+  const navTo = (key) => { setTab(key); setNavOpen(false); };
 
   return (
     <div className="rd-shell">
-      <aside className="rd-sidebar">
+      <aside className={`rd-sidebar${navOpen ? ' open' : ''}`}>
         <div className="rd-logo">
           <div className="rd-logo-art" aria-hidden="true" />
           <div className="rd-logo-name">EcoBin</div>
@@ -160,7 +171,7 @@ export default function ResidentHome() {
               key={key}
               type="button"
               className={tab === key ? 'active' : ''}
-              onClick={() => setTab(key)}
+              onClick={() => navTo(key)}
             >
               <span className="rd-nav-icon"><Ico n={icon} /></span>
               {label}
@@ -178,7 +189,12 @@ export default function ResidentHome() {
         </button>
       </aside>
 
+      {navOpen && <div className="rd-overlay" onClick={() => setNavOpen(false)} aria-hidden="true" />}
+
       <main className="rd-main">
+        <button type="button" className="rd-burger" onClick={() => setNavOpen(v => !v)} aria-expanded={navOpen} aria-controls="rd-drawer">
+          <span aria-hidden="true">☰</span> Menu
+        </button>
         <header className="rd-topbar">
           <form className="rd-search" onSubmit={onSearch} role="search">
             <Ico n="search" size={18} />

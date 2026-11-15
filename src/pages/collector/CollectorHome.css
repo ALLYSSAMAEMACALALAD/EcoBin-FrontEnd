@@ -508,62 +508,109 @@
 }
 
 @media (max-width: 860px) {
-.cd-shell {
+  .cd-shell {
     grid-template-columns:1fr;
     width:100%!important;
     margin-left:0!important;
     margin-right:0!important
   }
 
-.cd-sidebar {
-    position:static;
-    height:auto;
-    padding:16px
+  /* Off-canvas drawer: hidden by default, slides in when .open is set on the sidebar */
+  .cd-sidebar {
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    z-index:60;
+    width:min(300px, 86vw);
+    height:100vh;
+    height:100dvh;
+    border-right:1px solid var(--line);
+    box-shadow:0 20px 60px rgba(10, 30, 18, .35);
+    transform:translateX(-105%);
+    transition:transform .28s ease;
+    padding:20px 16px;
+    overflow-y:auto;
+    overflow-x:hidden
   }
+  .cd-sidebar.open { transform:translateX(0); }
 
-.cd-brand {
-    flex-direction:row;
+  .cd-overlay {
+    position:fixed;
+    inset:0;
+    z-index:55;
+    background:rgba(15, 32, 22, .45);
+    backdrop-filter:blur(2px);
+    animation:cd-overlay-in .28s ease;
+  }
+  @keyframes cd-overlay-in { from { opacity:0; } to { opacity:1; } }
+
+  .cd-burger {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 14px;
+    font:inherit;
+    font-weight:700;
+    color:var(--green-900);
+    cursor:pointer;
     margin-bottom:12px
   }
+  .cd-burger:hover { background:var(--lime-soft); border-color:var(--lime-soft); }
 
-.cd-brand-tile {
+  .cd-brand {
+    flex-direction:row;
+    margin-bottom:12px;
+    align-items:center;
+    gap:12px
+  }
+
+  .cd-brand-tile {
     width:44px;
     height:44px;
     font-size:22px;
     border-radius:12px
   }
 
-.cd-brand-name {
+  .cd-brand-name {
     font-size:20px
   }
 
-.cd-user {
+  .cd-user {
     margin-bottom:10px
   }
 
-.cd-nav {
-    display:flex;
-    overflow-x:auto;
-    gap:6px
+  .cd-nav {
+    display:grid;
+    gap:4px;
+    overflow-x:visible;
+    overflow-y:visible
   }
 
-.cd-nav button {
-    width:auto
+  .cd-nav button {
+    width:100%;
+    padding:11px 12px;
+    font-size:14px
   }
 
-.cd-logout {
-    margin-top:8px
+  .cd-logout {
+    margin-top:auto;
+    padding:11px 12px;
+    font-size:14px
   }
 
-.cd-tagline {
+  .cd-tagline {
     display:none
   }
 
-.cd-main {
+  .cd-main {
     padding:18px 16px 40px
   }
 
-.cd-hero h1 {
+  .cd-hero h1 {
     font-size:28px
   }
 
@@ -718,31 +765,40 @@
 }
 
 @media (max-width: 480px) {
+  .cd-list-meta { white-space: normal; text-align: right; }
+  .cd-list { font-size: .9rem; }
+  .cd-list-icon { width: 36px; height: 36px; font-size: 16px; }
+  .cd-tile { padding: 16px; }
+  .cd-big { font-size: 36px; }
+  .cd-stats-body { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
 .cd-shell {
     width:100%!important;
     margin-left:0!important;
     margin-right:0!important
   }
 
-.cd-nav button {
+  .cd-nav button {
     padding:8px 10px;
     font-size:12px
   }
 
-.cd-nav-icon {
+  .cd-nav-icon {
     width:18px;
     font-size:14px
   }
 
-.cd-main {
+  .cd-main {
     padding:12px 10px 28px
   }
 
-.cd-hero h1 {
+  .cd-hero h1 {
     font-size:22px
   }
 
-.cd-main .card {
+  .cd-main .card {
     padding:16px;
     margin-bottom:12px
   }
@@ -1003,6 +1059,10 @@
     align-items:flex-start
   }
 }
+
+/* Drawer pieces — only active ≤860px via the media query below */
+.cd-burger { display: none; }
+.cd-overlay { display: none; }
 
 .qr-box {
   width:100%;
