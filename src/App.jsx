@@ -9,6 +9,7 @@ import CollectorHome from './pages/collector/CollectorHome.jsx';
 import AdminHome from './pages/admin/AdminHome.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
+import { ThemeFloat } from './lib/theme.jsx';
 
 /** Role-based route guard. The server enforces the same roles; this only controls what the UI shows. */
 function ProtectedRoute({ role, children }) {
@@ -22,16 +23,23 @@ function ProtectedRoute({ role, children }) {
 export default function App() {
   const { user, ready } = useAuth();
   return (
-    <Routes>
-      <Route path="/login" element={ready && user ? <Navigate to={ROLE_HOME[user.role]} replace /> : <Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/resident" element={<ProtectedRoute role="resident"><ResidentHome /></ProtectedRoute>} />
-      <Route path="/collector" element={<ProtectedRoute role="collector"><CollectorHome /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute role="admin"><AdminHome /></ProtectedRoute>} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="*" element={<Navigate to={user ? ROLE_HOME[user.role] : '/login'} replace />} />
-    </Routes>
+    <>
+      <ThemeFloat />
+      <Routes>
+        <Route path="/login" element={ready && user ? <Navigate to={ROLE_HOME[user.role]} replace /> : <Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/resident" element={<ProtectedRoute role="resident"><ResidentHome /></ProtectedRoute>} />
+        <Route path="/collector" element={<ProtectedRoute role="collector"><CollectorHome /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute role="admin"><AdminHome /></ProtectedRoute>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="*" element={<Navigate to={user ? ROLE_HOME[user.role] : '/login'} replace />} />
+      </Routes>
+    </>
   );
+<<<<<<< HEAD
 }
   
+=======
+}
+>>>>>>> d1229fe8827e3542a5169eb55e664e73f04c0d42
