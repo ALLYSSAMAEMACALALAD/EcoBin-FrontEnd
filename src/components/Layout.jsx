@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { LeafIcon } from './icons.jsx';
+import { ThemeToggle } from '../lib/theme.jsx';   // <-- BAGO (1)
 
 const ROLE_LABEL = { resident: 'Resident', collector: 'Collector / Driver', admin: 'Admin' };
 
@@ -18,6 +19,7 @@ export default function Layout({ children }) {
         <div className="who">
           <span className={`badge role-${user.role}`}>{ROLE_LABEL[user.role]}</span>
           <span className="muted hide-sm">{user.name}</span>
+          <ThemeToggle className="sm" />           {/* <-- BAGO (2) */}
           <button className="signout" onClick={onLogout}>Sign out</button>
         </div>
       </header>

@@ -1,17 +1,51 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
 import PasswordChecklist from '../components/PasswordChecklist.jsx';
 import { isPasswordStrong } from '../lib/password.js';
 
+// Small line icons (no extra library needed)
+const PATHS = {
+  user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>,
+  mail: <><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m3.5 7 8.5 6 8.5-6" /></>,
+  phone: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></>,
+  pin: <><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>,
+  lock: <><rect x="5" y="11" width="14" height="10" rx="2.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  eye: <><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
+  eyeOff: <><path d="M10.6 5.1A9.6 9.6 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2" /><path d="M3 3l18 18" /></>,
+  login: <><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" /><path d="m10 17 5-5-5-5M15 12H3" /></>,
+  plus: <path d="M12 5v14M5 12h14" />
+};
+
+function FIcon({ n, size = 20 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {PATHS[n]}
+    </svg>
+  );
+}
+
 // Public sign-up always creates a Resident. Collector and admin accounts are created by an admin.
-export default function Register() {
+// Pass `onClose` to show the form as a popup (used by the Login page).
+// Without it, this is the normal full /register page.
+export default function Register({ onClose }) {
   const { register } = useAuth();
   const [form, setForm] = useState({ name: '', email: '', phone: '', barangay: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState(null); // the new user, shown in the success modal
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -25,7 +59,7 @@ export default function Register() {
     setBusy(true);
     try {
       const user = await register(form);
-      window.location.assign(ROLE_HOME[user.role]);
+      setCreated(user); // show the success modal; the button below takes them to the dashboard
     } catch (err) {
       setError(err.message);
     } finally {
@@ -33,6 +67,138 @@ export default function Register() {
     }
   }
 
+  const goToDashboard = () => window.location.assign(ROLE_HOME[created.role]);
+
+  // Esc: closes the success modal (goes to dashboard) or, in popup mode, closes the form
+  useEffect(() => {
+    if (!created && !onClose) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (created) window.location.assign(ROLE_HOME[created.role]);
+      else onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [created, onClose]);
+
+  const formSection = (
+    <section className="rg-right">
+      <h1 className="rg-title">Get your eco-ID <span className="rg-leaf">🍃</span></h1>
+      <p className="rg-sub">Create a resident account in one step</p>
+
+      <Notice kind="error">{error}</Notice>
+
+      <form onSubmit={submit} className="rg-form">
+        <div className="rg-field">
+          <span className="rg-field-icon" aria-hidden="true"><FIcon n="user" /></span>
+          <input type="text" placeholder="Full name" aria-label="Full name" value={form.name} onChange={set('name')} required autoComplete="name" />
+        </div>
+        <div className="rg-field">
+          <span className="rg-field-icon" aria-hidden="true"><FIcon n="mail" /></span>
+          <input type="email" placeholder="Email" aria-label="Email" value={form.email} onChange={set('email')} required autoComplete="email" />
+        </div>
+        <div className="rg-field">
+          <span className="rg-field-icon" aria-hidden="true"><FIcon n="phone" /></span>
+          <input type="tel" placeholder="Mobile number (for SMS reminders)" aria-label="Mobile number" value={form.phone} onChange={set('phone')} autoComplete="tel" />
+        </div>
+        <div className="rg-field">
+          <span className="rg-field-icon" aria-hidden="true"><FIcon n="pin" /></span>
+          <input type="text" placeholder="Barangay / zone" aria-label="Barangay or zone" value={form.barangay} onChange={set('barangay')} required />
+        </div>
+        <div className="rg-field">
+          <span className="rg-field-icon" aria-hidden="true"><FIcon n="lock" /></span>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password (min. 8 characters)"
+            aria-label="Password"
+            value={form.password}
+            onChange={set('password')}
+            minLength={8}
+            required
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            className="rg-eye"
+            onClick={() => setShowPassword((s) => !s)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <FIcon n={showPassword ? 'eyeOff' : 'eye'} />
+          </button>
+        </div>
+
+        <PasswordChecklist password={form.password} />
+        <button className="rg-btn-primary" type="submit" disabled={busy || !isPasswordStrong(form.password)}>
+          <FIcon n="plus" size={18} />
+          {busy ? 'Creating…' : 'Create account'}
+        </button>
+      </form>
+
+      <p className="rg-footer">
+        Already registered?{' '}
+        {onClose ? (
+          <button type="button" className="rg-link rg-link-btn" onClick={onClose}>Sign in</button>
+        ) : (
+          <Link className="rg-link" to="/login">Sign in</Link>
+        )}
+      </p>
+    </section>
+  );
+
+  const successModal = created && (
+    <div className="modal-backdrop" role="presentation">
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title">
+        <div className="modal-icon" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8 12 3 3 5-6" />
+          </svg>
+        </div>
+        <h2 id="signup-modal-title">Account created!</h2>
+        <p className="muted">
+          Welcome to EcoBin, {(created.name || form.name || '').split(' ')[0] || 'neighbor'}. Your resident account is ready.
+        </p>
+        {created.eco_id && (
+          <div className="modal-id">
+            <span>Your Eco-ID</span>
+            <strong className="mono">{created.eco_id}</strong>
+          </div>
+        )}
+        <p className="muted modal-note">Show your Eco-ID at the drop-off hub so your points can be credited.</p>
+        <button type="button" className="btn primary" onClick={goToDashboard} autoFocus>
+          Go to my dashboard →
+        </button>
+      </div>
+    </div>
+  );
+
+  // ---------- Popup mode (opened from the Login page) ----------
+  if (onClose) {
+    return (
+      <>
+        {!created && (
+          <div
+            className="modal-backdrop"
+            role="presentation"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+          >
+            <div className="rg-modal" role="dialog" aria-modal="true" aria-label="Create account">
+              <button type="button" className="rg-modal-x" onClick={onClose} aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+              {formSection}
+            </div>
+          </div>
+        )}
+        {successModal}
+      </>
+    );
+  }
+
+  // ---------- Normal full page (/register) ----------
   return (
     <div className="rg-page">
       <div className="rg-card">
@@ -52,64 +218,10 @@ export default function Register() {
         </aside>
 
         {/* Right: register form */}
-        <section className="rg-right">
-          <h1 className="rg-title">Get your eco-ID <span className="rg-leaf">🍃</span></h1>
-          <p className="rg-sub">Create a resident account in one step</p>
-
-          <Notice kind="error">{error}</Notice>
-
-          <form onSubmit={submit} className="rg-form">
-            <div className="rg-field">
-              <span className="rg-field-icon" aria-hidden="true">👤</span>
-              <input type="text" placeholder="Full name" aria-label="Full name" value={form.name} onChange={set('name')} required autoComplete="name" />
-            </div>
-            <div className="rg-field">
-              <span className="rg-field-icon" aria-hidden="true">✉️</span>
-              <input type="email" placeholder="Email" aria-label="Email" value={form.email} onChange={set('email')} required autoComplete="email" />
-            </div>
-            <div className="rg-field">
-              <span className="rg-field-icon" aria-hidden="true">📱</span>
-              <input type="tel" placeholder="Mobile number (for SMS reminders)" aria-label="Mobile number" value={form.phone} onChange={set('phone')} autoComplete="tel" />
-            </div>
-            <div className="rg-field">
-              <span className="rg-field-icon" aria-hidden="true">📍</span>
-              <input type="text" placeholder="Barangay / zone" aria-label="Barangay or zone" value={form.barangay} onChange={set('barangay')} required />
-            </div>
-            <div className="rg-field">
-              <span className="rg-field-icon" aria-hidden="true">🔒</span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password (min. 8 characters)"
-                aria-label="Password"
-                value={form.password}
-                onChange={set('password')}
-                minLength={8}
-                required
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                className="rg-eye"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
-            </div>
-
-            <PasswordChecklist password={form.password} />
-            <button className="rg-btn-primary" type="submit" disabled={busy || !isPasswordStrong(form.password)}>
-              <span aria-hidden="true">✚</span>
-              {busy ? 'Creating…' : 'Create account'}
-            </button>
-          </form>
-
-          <p className="rg-footer">
-            Already registered?{' '}
-            <Link className="rg-link" to="/login">Sign in</Link>
-          </p>
-        </section>
+        {formSection}
       </div>
+
+      {successModal}
     </div>
   );
 }

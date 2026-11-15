@@ -1584,3 +1584,294 @@ h1 {
     font-size:1.35rem
   }
 }
+
+
+/* =====================================================================
+   EcoBin UI refresh — cleaner look based on the new mockups, light + dark.
+   (No earth / tree illustrations.) Appended at the end so it overrides.
+   ===================================================================== */
+
+/* Extra colour tokens. Dark values live in dark.css. */
+:root {
+  --surface-2:#f7f6ef;
+  --hover:#eaf4e4;
+  --chip:#f1f3ea;
+  --field:#f4f6f1;
+  --tint-green:#dff1dd;
+  --tint-mint:#d9f0ea;
+  --tint-sun:#fbf0cc;
+  --tint-card:#f1f8ec;
+  --accent-text:#1f6b4a;
+  --heading:#174d37;
+  --panel-a:#f4f9f0;
+  --panel-b:#e3efe0;
+  --page-a:#edf5e9;
+  --page-b:#e4f0e2;
+  --chart:#2f7d52;
+  --tip-bg:#17492f;
+  --overlay:rgba(10,24,16,.55)
+}
+
+/* Keep the layout width the same on every page (scrollbar or not) and
+   let the sidebar stay fixed while the page scrolls. */
+html {
+  scrollbar-gutter:stable
+}
+
+html,body {
+  overflow-x:clip
+}
+
+/* Auth pages (login, register, forgot / reset password) */
+.lg-page,.rg-page,.fp-page {
+  background:linear-gradient(160deg,var(--page-a) 0%,var(--cream) 55%,var(--page-b) 100%)
+}
+
+.lg-card,.rg-card,.fp-card {
+  background:var(--card);
+  border:1px solid var(--line);
+  box-shadow:0 24px 64px #17311f1a
+}
+
+.lg-left,.rg-left,.fp-left {
+  justify-content:center;
+  background:linear-gradient(180deg,var(--panel-a) 0%,var(--panel-b) 100%)
+}
+
+.lg-logo-mark,.rg-logo-mark,.fp-logo-mark {
+  width:132px;
+  height:132px;
+  border-radius:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M74 6c20 1 36 14 38 36-24 2-40-11-38-36z' fill='%2358b46f'/%3E%3Cpath d='M78 12c10 9 20 17 30 26' stroke='%23e8f5e9' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Crect x='46' y='34' width='28' height='10' rx='4' fill='%231b5e3b'/%3E%3Crect x='20' y='42' width='80' height='13' rx='6.5' fill='%231b5e3b'/%3E%3Cpath d='M27 58h66l-6 51a8 8 0 0 1-8 7H41a8 8 0 0 1-8-7z' fill='%23236b45'/%3E%3Cpath d='M60 104c-15 0-22-10-20-26 15-2 24 9 20 26z' fill='%23e8f5e9'/%3E%3Cpath d='M60 102c-2-8-6-14-12-20' stroke='%23236b45' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+  box-shadow:none;
+  font-size:0
+}
+
+.lg-brand,.rg-brand,.fp-brand {
+  margin-top:14px;
+  font-size:48px;
+  color:var(--heading)
+}
+
+.lg-tag,.rg-tag,.fp-tag {
+  font-style:normal;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.04em;
+  color:var(--accent-text)
+}
+
+.lg-mascot,.rg-mascot,.fp-mascot,
+.lg-banner-icon,.rg-banner-icon,.fp-banner-icon,
+.lg-leaf,.rg-leaf,.fp-leaf {
+  display:none
+}
+
+.lg-banner,.rg-banner,.fp-banner {
+  margin-top:34px;
+  justify-content:center;
+  text-align:center;
+  background:transparent;
+  color:var(--heading);
+  font-size:20px;
+  padding:0
+}
+
+/* Resident pages have their own sidebar, so hide the extra top bar above it */
+.app:has(.rd-shell) .topbar {
+  display:none
+}
+
+.app:has(.rd-shell) .content {
+  padding-bottom:0
+}
+
+/* Light / dark switch button */
+.theme-toggle {
+  width:44px;
+  height:44px;
+  flex-shrink:0;
+  border-radius:50%;
+  display:inline-grid;
+  place-items:center;
+  padding:0;
+  cursor:pointer;
+  color:var(--ink-soft);
+  background:var(--card);
+  border:1px solid var(--line);
+  transition:background .15s,color .15s,border-color .15s
+}
+
+.theme-toggle:hover {
+  background:var(--hover);
+  color:var(--accent-text)
+}
+
+.theme-toggle.sm {
+  width:36px;
+  height:36px
+}
+
+.theme-toggle.theme-float {
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:80;
+  box-shadow:var(--shadow)
+}
+
+/* Pop-up (used after creating an account) */
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:var(--overlay);
+  backdrop-filter:blur(3px);
+  animation:modal-fade .18s ease-out
+}
+
+.modal {
+  width:100%;
+  max-width:420px;
+  padding:34px 30px 30px;
+  text-align:center;
+  color:var(--ink);
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.28);
+  animation:modal-pop .22s ease-out
+}
+
+.modal-icon {
+  width:68px;
+  height:68px;
+  margin:0 auto 16px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:var(--tint-green);
+  color:var(--accent-text)
+}
+
+.modal h2 {
+  margin:0 0 8px;
+  font-size:24px
+}
+
+.modal p {
+  margin:0 0 14px
+}
+
+.modal-id {
+  display:grid;
+  gap:4px;
+  margin:6px 0 12px;
+  padding:14px 16px;
+  background:var(--surface-2);
+  border:1px dashed var(--line);
+  border-radius:14px
+}
+
+.modal-id span {
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.06em
+}
+
+.modal-id strong {
+  font-size:20px;
+  color:var(--heading)
+}
+
+.modal .modal-note {
+  font-size:13.5px
+}
+
+.modal .btn {
+  width:100%;
+  justify-content:center;
+  padding:13px 18px;
+  font-size:15.5px
+}
+
+@keyframes modal-fade {
+  from { opacity:0 }
+  to { opacity:1 }
+}
+
+@keyframes modal-pop {
+  from { opacity:0; transform:translateY(10px) scale(.97) }
+  to { opacity:1; transform:none }
+}
+
+.rg-modal {
+  position: relative;
+  width: min(480px, calc(100vw - 32px));
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--card, #fff);
+  color: var(--ink, #17311f);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+  padding: 8px 4px;
+}
+
+.rg-modal .rg-right {
+  padding: 28px 28px 24px;
+}
+
+.rg-modal-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted, #6b7a6f);
+  cursor: pointer;
+}
+
+.rg-modal-x:hover {
+  background: var(--hover, #eef4ea);
+  color: var(--ink, #17311f);
+}
+
+.rg-link-btn,
+.lg-link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lg-field-icon,
+.rg-field-icon {
+  display: grid;
+  place-items: center;
+  color: #2f7d52;
+}
+
+.lg-eye,
+.rg-eye {
+  display: grid;
+  place-items: center;
+  color: #6b7a6f;
+}
+
+.lg-eye:hover,
+.rg-eye:hover {
+  color: #17492f;
+}

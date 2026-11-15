@@ -1,0 +1,621 @@
+/* =====================================================================
+   Dark mode. The theme is switched by <html data-theme="dark">
+   (see src/lib/theme.jsx). Loaded last so it can override page styles.
+   ===================================================================== */
+
+html[data-theme="dark"] {
+  color-scheme:dark;
+  --cream:#0d1711;
+  --card:#15221a;
+  --ink:#e6efe8;
+  --ink-soft:#b4c6b9;
+  --muted:#8ba294;
+  --line:#26372d;
+  --lime-soft:#243d2d;
+  --danger:#f08080;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px rgba(0,0,0,.35);
+  --surface-2:#1a2a21;
+  --hover:#223629;
+  --chip:#1d2d24;
+  --field:#192920;
+  --tint-green:#1f3d2c;
+  --tint-mint:#1b3a35;
+  --tint-sun:#3a3216;
+  --tint-card:#182b20;
+  --accent-text:#8fd9a8;
+  --heading:#d3f0dc;
+  --panel-a:#173023;
+  --panel-b:#10241a;
+  --page-a:#10231a;
+  --page-b:#0e1d15;
+  --chart:#5fd08a;
+  --tip-bg:#2f7d52;
+  --overlay:rgba(0,0,0,.65)
+}
+
+/* ---------------------------------------------------------------------
+   Generated from the existing stylesheets: light backgrounds become dark,
+   dark text becomes light, light borders become dark.
+   --------------------------------------------------------------------- */
+/* ---- from styles.orig.css ---- */
+
+:where(html[data-theme="dark"]) .lg-title {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .lg-field {
+  background:var(--surface-2)
+}
+
+:where(html[data-theme="dark"]) .lg-field:focus-within {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .lg-link {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .rg-title {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .rg-field {
+  background:var(--surface-2)
+}
+
+:where(html[data-theme="dark"]) .rg-field:focus-within {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .rg-link {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .fp-title {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .fp-field {
+  background:var(--surface-2)
+}
+
+:where(html[data-theme="dark"]) .fp-field:focus-within {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .fp-otp-box {
+  color:var(--heading);
+  background:var(--surface-2)
+}
+
+:where(html[data-theme="dark"]) .fp-otp-box:focus {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .fp-link {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .fp-link-btn {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) a {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .topbar {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .signout {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .tabs button:hover {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .tabs button.active {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) input {
+  border:1px solid #383e33;
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) select {
+  border:1px solid #383e33;
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) textarea {
+  border:1px solid #383e33;
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .btn {
+  background:var(--card);
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .btn.ghost {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .notice.info {
+  background:#151b25;
+  color:#a3bddc
+}
+
+:where(html[data-theme="dark"]) .notice.success {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .notice.error {
+  background:#271616;
+  color:#dc9a9a
+}
+
+:where(html[data-theme="dark"]) .badge {
+  background:#23281e
+}
+
+:where(html[data-theme="dark"]) .role-resident {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .role-collector {
+  background:#18202b;
+  color:#a3bddc
+}
+
+:where(html[data-theme="dark"]) .role-admin {
+  background:#2e271a;
+  color:#eecba0
+}
+
+:where(html[data-theme="dark"]) .s-open {
+  background:#2b2418;
+  color:#edc199
+}
+
+:where(html[data-theme="dark"]) .s-pending {
+  background:#2b2418;
+  color:#edc199
+}
+
+:where(html[data-theme="dark"]) .s-investigating {
+  background:#18202b;
+  color:#a3bddc
+}
+
+:where(html[data-theme="dark"]) .s-in_progress {
+  background:#18202b;
+  color:#a3bddc
+}
+
+:where(html[data-theme="dark"]) .s-resolved {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .s-approved {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .s-completed {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .s-rejected {
+  background:#271616;
+  color:#dc9a9a
+}
+
+:where(html[data-theme="dark"]) .password-checklist {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .password-checklist li.ok {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .big {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .stat {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .stat span {
+  color:var(--accent-text)
+}
+
+/* ---- from ResidentHome.orig.css ---- */
+
+:where(html[data-theme="dark"]) .rd-shell .btn.ghost {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .rd-shell .btn.danger {
+  background:#271616;
+  border:1px solid #402626
+}
+
+:where(html[data-theme="dark"]) .rd-shell input {
+  background:var(--card);
+  border:1px solid #383e33
+}
+
+:where(html[data-theme="dark"]) .rd-shell select {
+  background:var(--card);
+  border:1px solid #383e33
+}
+
+:where(html[data-theme="dark"]) .rd-shell textarea {
+  background:var(--card);
+  border:1px solid #383e33
+}
+
+:where(html[data-theme="dark"]) .rd-shell .badge {
+  background:#2b2418;
+  color:#edc199
+}
+
+:where(html[data-theme="dark"]) .rd-shell .big {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .rd-shell .tabs button {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .rd-shell .tabs button.active {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .rd-reward-pts {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .rd-reward-img {
+  background:#202618
+}
+
+/* ---- from AdminHome.css ---- */
+
+:where(html[data-theme="dark"]) .ad-nav button.active {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .ad-search {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-bell {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-bell-dot {
+  border:2px solid #1c1c1c
+}
+
+:where(html[data-theme="dark"]) .ad-date {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-hero {
+  background:linear-gradient(110deg,#29331d,#22251a 70%)
+}
+
+:where(html[data-theme="dark"]) .ad-hero h1 {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .ad-page-title {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .ad-stat {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-stat-value {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .tone-green {
+  background:#1e2c21
+}
+
+:where(html[data-theme="dark"]) .tone-amber {
+  background:#2e271a
+}
+
+:where(html[data-theme="dark"]) .tone-orange {
+  background:#30241c
+}
+
+:where(html[data-theme="dark"]) .tone-blue {
+  background:#18202b
+}
+
+:where(html[data-theme="dark"]) .ad-strip-item {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-strip-item strong {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .ad-card {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .ad-chip {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .ad-mini-search {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .zone-suggestions {
+  background:var(--card);
+  border:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .zone-suggestion {
+  color:var(--ink, #d0ddd5)
+}
+
+:where(html[data-theme="dark"]) .zone-suggestion:hover {
+  background:#1f251b
+}
+
+:where(html[data-theme="dark"]) .zone-suggestion:focus-visible {
+  background:#1f251b
+}
+
+:where(html[data-theme="dark"]) .reports-layout {
+  background:var(--surface-2);
+  border-top:1px solid #2a3128;
+  border-bottom:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .reports-sidebar {
+  background:var(--card);
+  border-right:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .reports-menu button {
+  color:#bac4bd
+}
+
+:where(html[data-theme="dark"]) .reports-menu button:hover {
+  background:#1f251b;
+  color:#ccded3
+}
+
+:where(html[data-theme="dark"]) .report-gen-cat {
+  background:#1c2217;
+  border:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .report-gen-cat:hover {
+  background:#1f251b;
+  border-color:#353e33
+}
+
+:where(html[data-theme="dark"]) .report-history tbody tr:hover {
+  background:#1b2216
+}
+
+:where(html[data-theme="dark"]) .reports-sidebar {
+  border-bottom:1px solid #2a3128
+}
+
+/* ---- from CollectorHome.css ---- */
+
+:where(html[data-theme="dark"]) .cd-nav button.active {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .cd-bell {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .cd-bell-dot {
+  border:2px solid #1c1c1c
+}
+
+:where(html[data-theme="dark"]) .cd-date {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .cd-hero h1 {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .cd-tile {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .cd-link {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .cd-big {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .cd-list-icon {
+  background:#1f251b
+}
+
+:where(html[data-theme="dark"]) .cd-pill {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .dropoff-resident {
+  border:1px solid #374230
+}
+
+:where(html[data-theme="dark"]) .dropoff-resident span:first-child {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .dropoff-preview {
+  background:#202618;
+  border:1px dashed #374230;
+  color:var(--ink-soft, #b9c0b9)
+}
+
+:where(html[data-theme="dark"]) .dropoff-preview strong {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .dp-steps li {
+  background:var(--surface-2)
+}
+
+:where(html[data-theme="dark"]) .dp-steps li.active {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .dp-steps li.done {
+  color:var(--accent-text)
+}
+
+:where(html[data-theme="dark"]) .dp-step-dot {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .dp-summary div {
+  background:#1c2117
+}
+
+:where(html[data-theme="dark"]) .dp-txid {
+  background:var(--surface-2);
+  border:1px dashed #3d4439
+}
+
+:where(html[data-theme="dark"]) .dropoff-photo-label em {
+  color:#d2938e
+}
+
+:where(html[data-theme="dark"]) .dropoff-photo-btn {
+  border:1.5px dashed #374230;
+  background:var(--card);
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .dropoff-photo-btn:hover {
+  background:#202618
+}
+
+:where(html[data-theme="dark"]) .dropoff-photo-preview {
+  background:var(--card);
+  border:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .dropoff-photo-preview img {
+  border:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .dp-photo-thumb {
+  border:1px solid #2a3128
+}
+
+:where(html[data-theme="dark"]) .cd-table {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .cd-table thead th {
+  background:#1e251a;
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .cd-table tbody td {
+  border-bottom:1px solid #262c22
+}
+
+:where(html[data-theme="dark"]) .cd-table tbody tr:nth-child(even) td {
+  background:var(--card)
+}
+
+:where(html[data-theme="dark"]) .cd-table tbody tr:hover td {
+  background:#1f2817
+}
+
+:where(html[data-theme="dark"]) .cd-pts {
+  color:var(--heading)
+}
+
+:where(html[data-theme="dark"]) .link-like {
+  color:var(--accent-text)
+}
+
+/* ---------------------------------------------------------------------
+   Hand-tuned dark overrides
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] .lg-logo-mark,
+html[data-theme="dark"] .rg-logo-mark,
+html[data-theme="dark"] .fp-logo-mark,
+html[data-theme="dark"] .rd-bin-art {
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M74 6c20 1 36 14 38 36-24 2-40-11-38-36z' fill='%237fd09a'/%3E%3Cpath d='M78 12c10 9 20 17 30 26' stroke='%2317492f' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Crect x='46' y='34' width='28' height='10' rx='4' fill='%23f1f8ee'/%3E%3Crect x='20' y='42' width='80' height='13' rx='6.5' fill='%23f1f8ee'/%3E%3Cpath d='M27 58h66l-6 51a8 8 0 0 1-8 7H41a8 8 0 0 1-8-7z' fill='%23f1f8ee'/%3E%3Cpath d='M60 104c-15 0-22-10-20-26 15-2 24 9 20 26z' fill='%2317492f'/%3E%3Cpath d='M60 102c-2-8-6-14-12-20' stroke='%23f1f8ee' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")
+}
+
+html[data-theme="dark"] .rd-sidebar {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-opacity='0.09' stroke-width='0.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20c-4 0-7-3-7-8 0-4 4-8 13-8 0 9-4 16-11 16Z'/%3E%3Cpath d='M4 20c6 0 10-4 12-9'/%3E%3C/svg%3E") no-repeat 150% 118% / 260px,
+    radial-gradient(circle at 0% 0%,#2a7a4e40 0%,transparent 45%),
+    linear-gradient(180deg,#15291d 0%,#0e1c14 100%)
+}
+
+html[data-theme="dark"] .rd-nav button.active {
+  background:#2f7d52;
+  color:#fff;
+  box-shadow:none
+}
+
+html[data-theme="dark"] .rd-shell .btn.primary,
+html[data-theme="dark"] .lg-btn-primary,
+html[data-theme="dark"] .rg-btn-primary,
+html[data-theme="dark"] .fp-btn-primary {
+  background:#2f7d52;
+  border-color:#2f7d52;
+  color:#fff
+}
+
+html[data-theme="dark"] .rd-shell .btn.primary:hover,
+html[data-theme="dark"] .lg-btn-primary:hover,
+html[data-theme="dark"] .rg-btn-primary:hover,
+html[data-theme="dark"] .fp-btn-primary:hover {
+  background:#38905f
+}
+
+html[data-theme="dark"] .rd-shell .btn.primary:disabled,
+html[data-theme="dark"] .rg-btn-primary:disabled {
+  background:#3a5a49;
+  border-color:#3a5a49;
+  color:#c9d8cf
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color:var(--muted)
+}
+
+/* QR codes must stay black on white so phones can scan them */
+html[data-theme="dark"] .rd-qr-svg,
+html[data-theme="dark"] .qr svg {
+  background:#fff;
+  border-radius:12px
+}
+
+html[data-theme="dark"] .rd-badge {
+  border-color:var(--cream)
+}
