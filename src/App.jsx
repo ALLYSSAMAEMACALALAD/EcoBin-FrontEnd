@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import './lib/theme.jsx'; // boot the theme before first paint
 import { useAuth, ROLE_HOME } from './lib/auth.jsx';
 import Layout from './components/Layout.jsx';
 import Login from './pages/Login.jsx';
@@ -32,6 +33,5 @@ export default function App() {
       <Route path="*" element={<Navigate to={user ? ROLE_HOME[user.role] : '/login'} replace />} />
     </Routes>
   );
-  
 }
   

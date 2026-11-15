@@ -1863,11 +1863,12 @@ function ReportGenerate({ data, filters, onSaved }) {
 
 function reportDateParts(v) {
   if (!v) return { date: '', time: '' };
-  const d = new Date(String(v).replace(' ', 'T'));
+  // MySQL DATETIMEs are UTC; parse as UTC so they display in the viewer's timezone.
+  const d = new Date(String(v).replace(' ', 'T') + 'Z');
   if (Number.isNaN(d.getTime())) return { date: String(v), time: '' };
   return {
-    date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
+    date: d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
   };
 }
 

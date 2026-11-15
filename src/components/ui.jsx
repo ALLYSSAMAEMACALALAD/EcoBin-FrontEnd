@@ -53,5 +53,14 @@ export function useLoader(fn, deps = []) {
   return { ...state, reload: () => setTick((t) => t + 1) };
 }
 
-export const fmtDate = (v) => (v ? new Date(v.replace(' ', 'T')).toLocaleString() : '—');
+export const fmtDate = (v) => {
+  if (!v) return '—';
+  // MySQL stores created_at in UTC (Render defaults). Parse the string as UTC
+  // so it displays in the viewer's local timezone instead of being misread as local.
+  const d = new Date(String(v).replace(' ', 'T') + 'Z');
+  if (Number.isNaN(d.getTime())) return String(v);
+  const date = d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' });
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${date} · ${time}`;
+};
 export const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : '');
