@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
-import './Register.css';
+import PasswordChecklist from '../components/PasswordChecklist.jsx';
+import { isPasswordStrong } from '../lib/password.js';
 
 // Public sign-up always creates a Resident. Collector and admin accounts are created by an admin.
 export default function Register() {
@@ -17,6 +18,10 @@ export default function Register() {
   async function submit(e) {
     e.preventDefault();
     setError('');
+    if (!isPasswordStrong(form.password)) {
+      setError('Password must be at least 8 characters and include an uppercase letter, a lowercase letter and a special character.');
+      return;
+    }
     setBusy(true);
     try {
       const user = await register(form);
@@ -36,9 +41,7 @@ export default function Register() {
           <div className="rg-logo-mark">♻️</div>
           <div className="rg-brand">EcoBin</div>
           <p className="rg-tag">Recycle. Earn. Keep it Green.</p>
-
           <div className="rg-mascot" aria-hidden="true">🗑️</div>
-
           <div className="rg-banner">
             <span className="rg-banner-icon">🌱</span>
             <span>
@@ -48,11 +51,9 @@ export default function Register() {
           </div>
         </aside>
 
-        {/* Right: sign-up form */}
+        {/* Right: register form */}
         <section className="rg-right">
-          <h1 className="rg-title">
-            Get your eco-ID <span className="rg-leaf">🍃</span>
-          </h1>
+          <h1 className="rg-title">Get your eco-ID <span className="rg-leaf">🍃</span></h1>
           <p className="rg-sub">Create a resident account in one step</p>
 
           <Notice kind="error">{error}</Notice>
@@ -60,54 +61,20 @@ export default function Register() {
           <form onSubmit={submit} className="rg-form">
             <div className="rg-field">
               <span className="rg-field-icon" aria-hidden="true">👤</span>
-              <input
-                type="text"
-                placeholder="Full name"
-                aria-label="Full name"
-                value={form.name}
-                onChange={set('name')}
-                required
-                autoComplete="name"
-              />
+              <input type="text" placeholder="Full name" aria-label="Full name" value={form.name} onChange={set('name')} required autoComplete="name" />
             </div>
-
             <div className="rg-field">
               <span className="rg-field-icon" aria-hidden="true">✉️</span>
-              <input
-                type="email"
-                placeholder="Email"
-                aria-label="Email"
-                value={form.email}
-                onChange={set('email')}
-                required
-                autoComplete="email"
-              />
+              <input type="email" placeholder="Email" aria-label="Email" value={form.email} onChange={set('email')} required autoComplete="email" />
             </div>
-
             <div className="rg-field">
               <span className="rg-field-icon" aria-hidden="true">📱</span>
-              <input
-                type="tel"
-                placeholder="Mobile number (for SMS reminders)"
-                aria-label="Mobile number"
-                value={form.phone}
-                onChange={set('phone')}
-                autoComplete="tel"
-              />
+              <input type="tel" placeholder="Mobile number (for SMS reminders)" aria-label="Mobile number" value={form.phone} onChange={set('phone')} autoComplete="tel" />
             </div>
-
             <div className="rg-field">
               <span className="rg-field-icon" aria-hidden="true">📍</span>
-              <input
-                type="text"
-                placeholder="Barangay / zone"
-                aria-label="Barangay or zone"
-                value={form.barangay}
-                onChange={set('barangay')}
-                required
-              />
+              <input type="text" placeholder="Barangay / zone" aria-label="Barangay or zone" value={form.barangay} onChange={set('barangay')} required />
             </div>
-
             <div className="rg-field">
               <span className="rg-field-icon" aria-hidden="true">🔒</span>
               <input
@@ -130,7 +97,8 @@ export default function Register() {
               </button>
             </div>
 
-            <button className="rg-btn-primary" type="submit" disabled={busy}>
+            <PasswordChecklist password={form.password} />
+            <button className="rg-btn-primary" type="submit" disabled={busy || !isPasswordStrong(form.password)}>
               <span aria-hidden="true">✚</span>
               {busy ? 'Creating…' : 'Create account'}
             </button>

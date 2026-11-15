@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Notice } from '../components/ui.jsx';
-import './ForgotPassword.css';
+import PasswordChecklist from '../components/PasswordChecklist.jsx';
+import { isPasswordStrong } from '../lib/password.js';
 
 const CODE_LENGTH = 6;
 
@@ -132,6 +133,10 @@ export default function ForgotPassword() {
       setMsg({ kind: 'error', text: 'The passwords do not match.' });
       return;
     }
+    if (!isPasswordStrong(password)) {
+      setMsg({ kind: 'error', text: 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter and a special character.' });
+      return;
+    }
     setBusy(true);
     setMsg({ kind: 'info', text: '' });
     try {
@@ -166,9 +171,7 @@ export default function ForgotPassword() {
           <div className="fp-logo-mark">♻️</div>
           <div className="fp-brand">EcoBin</div>
           <p className="fp-tag">Recycle. Earn. Keep it Green.</p>
-
           <div className="fp-mascot" aria-hidden="true">🗑️</div>
-
           <div className="fp-banner">
             <span className="fp-banner-icon">🌱</span>
             <span>
@@ -201,7 +204,6 @@ export default function ForgotPassword() {
                   autoComplete="username"
                 />
               </div>
-
               <button className="fp-btn-primary" type="submit" disabled={busy}>
                 <span aria-hidden="true">✉</span>
                 {busy ? 'Sending…' : 'Send code'}
@@ -230,12 +232,10 @@ export default function ForgotPassword() {
                   />
                 ))}
               </div>
-
               <button className="fp-btn-primary" type="submit" disabled={busy || !codeComplete}>
                 <span aria-hidden="true">✓</span>
                 {busy ? 'Verifying…' : 'Verify code'}
               </button>
-
               <p className="fp-footer">
                 Didn't get the email?{' '}
                 <button type="button" className="fp-link-btn" onClick={startOver}>
@@ -283,7 +283,9 @@ export default function ForgotPassword() {
                 />
               </div>
 
-              <button className="fp-btn-primary" type="submit" disabled={busy}>
+              <PasswordChecklist password={password} />
+
+              <button className="fp-btn-primary" type="submit" disabled={busy || !isPasswordStrong(password) || password !== confirm}>
                 <span aria-hidden="true">↻</span>
                 {busy ? 'Saving…' : 'Reset password'}
               </button>

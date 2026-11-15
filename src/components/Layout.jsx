@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
+import { LeafIcon } from './icons.jsx';
 
 const ROLE_LABEL = { resident: 'Resident', collector: 'Collector / Driver', admin: 'Admin' };
 
@@ -11,8 +12,8 @@ export default function Layout({ children }) {
     <div className="app">
       <header className="topbar">
         <Link to={ROLE_HOME[user.role]} className="brand">
-          <span className="brand-tile" aria-hidden="true">♻</span>
-          <span className="brand-name">Eco-Bin</span>
+          <LeafIcon size={22} className="brand-mark" />
+          <span className="brand-name">EcoBin</span>
         </Link>
         <div className="who">
           <span className={`badge role-${user.role}`}>{ROLE_LABEL[user.role]}</span>

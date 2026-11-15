@@ -10,8 +10,9 @@ import {
   fmtDate,
   cap
 } from '../../components/ui.jsx';
-import { downloadCertificate } from '../../lib/certificate.js';
+
 import { compressImage } from '../../lib/image.js';
+import { downloadCertificate } from '../../lib/certificate.js';
 import './ResidentHome.css';
 
 // ==========================================
@@ -74,46 +75,6 @@ function getBalance(response) {
   }
 
   return null;
-}
-
-// Eco status based on points. Used in the "Eco Status" card.
-const ECO_TIERS = [
-  { min: 0, name: 'Eco Starter' },
-  { min: 100, name: 'Eco Helper' },
-  { min: 300, name: 'Green Champion' },
-  { min: 750, name: 'Eco Hero' }
-];
-
-function ecoTier(points) {
-  if (points == null) return { name: '—', progress: 0, next: null, needed: 0 };
-
-  let idx = 0;
-  ECO_TIERS.forEach((t, i) => { if (points >= t.min) idx = i; });
-
-  const cur = ECO_TIERS[idx];
-  const nxt = ECO_TIERS[idx + 1];
-  const progress = nxt ? (points - cur.min) / (nxt.min - cur.min) : 1;
-
-  return {
-    name: cur.name,
-    progress: Math.min(1, Math.max(0, progress)),
-    next: nxt?.name ?? null,
-    needed: nxt ? nxt.min - points : 0
-  };
-}
-
-// Finds the next upcoming pickup from the resident's routes
-function nextPickupFrom(routes = []) {
-  const today = new Date().toLocaleDateString('en-CA');
-  const upcoming = routes
-    .filter((r) => r.route_date >= today && r.status !== 'completed')
-    .sort((a, b) => a.route_date.localeCompare(b.route_date));
-  return upcoming[0] || null;
-}
-
-function formatLongDate(isoDate) {
-  const d = new Date(`${isoDate}T00:00:00`);
-  return d.toLocaleDateString('en-PH', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // ==========================================
@@ -206,16 +167,9 @@ function Overview({ onNavigate }) {
   const { user } = useAuth();
   const balance = useLoader(() => api('/balance'));
   const drops = useLoader(() => api('/dropoffs'));
-  const schedules = useLoader(() => api('/schedules'));
-  const routes = useLoader(() => api('/routes'));
 
   const points = getBalance(balance.data);
-  const tier = ecoTier(points);
   const dropRows = drops.data?.dropoffs || [];
-  const totalKg = dropRows.reduce((sum, d) => sum + Number(d.weight_kg || 0), 0);
-  const recentBars = dropRows.slice(0, 8).reverse();
-  const maxKg = Math.max(1, ...recentBars.map((d) => Number(d.weight_kg) || 0));
-  const nextPickup = nextPickupFrom(routes.data?.routes || []);
 
   return (
     <>
@@ -236,65 +190,10 @@ function Overview({ onNavigate }) {
             View Rewards →
           </button>
         </div>
-
-        <div className="card rd-glow">
-          <div className="rd-stat-label">Your Eco Status</div>
-          <div className="rd-stat-value" style={{ fontSize: 30 }}>{tier.name}</div>
-          <div className="rd-stat-sub">
-            {tier.next ? `${tier.needed} pts to go until ${tier.next}` : "You've reached the highest level!"}
-          </div>
-          <div className="rd-progress">
-            <span style={{ width: `${tier.progress * 100}%` }} />
-          </div>
-        </div>
-
-        <div className="card rd-glow">
-          <div className="rd-stat-label">Next Collection</div>
-          {routes.loading ? (
-            <div className="rd-stat-sub">Loading…</div>
-          ) : nextPickup ? (
-            <>
-              <div className="rd-stat-value" style={{ fontSize: 26 }}>
-                {formatLongDate(nextPickup.route_date)}
-              </div>
-              <div className="rd-stat-sub">{nextPickup.name}</div>
-            </>
-          ) : (
-            <div className="rd-stat-sub">No pickup scheduled.</div>
-          )}
-          <button
-            className="btn ghost"
-            type="button"
-            style={{ marginTop: 14 }}
-            onClick={() => onNavigate('schedule')}
-          >
-            View Schedule →
-          </button>
-        </div>
       </div>
 
-      {/* Impact, quick actions, rewards preview */}
+      {/* Quick actions and rewards preview */}
       <div className="rd-row">
-        <div className="card">
-          <div className="rd-card-head">
-            <h3 className="rd-card-title">Recycling Impact</h3>
-          </div>
-          <div className="rd-stat-value" style={{ marginTop: 0 }}>
-            {totalKg.toLocaleString(undefined, { maximumFractionDigits: 2 })} kg
-          </div>
-          <div className="rd-stat-sub">Total recyclables</div>
-          <div className="rd-bars">
-            {recentBars.length ? recentBars.map((d) => (
-              <div
-                key={d.id ?? d.created_at}
-                className="rd-bar"
-                title={`${d.weight_kg} kg`}
-                style={{ height: `${(Number(d.weight_kg) / maxKg) * 100}%` }}
-              />
-            )) : <p className="muted">No drop-offs yet.</p>}
-          </div>
-        </div>
-
         <div className="card">
           <div className="rd-card-head">
             <h3 className="rd-card-title">Quick Actions</h3>
@@ -376,27 +275,11 @@ function Overview({ onNavigate }) {
             <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
               Show this QR code at the drop-off hub so your points can be credited.
             </p>
-            <QRCodeSVG value={user.eco_id} size={160} includeMargin />
+            <QRCodeSVG value={user.eco_id} size={280} includeMargin className="rd-qr-svg" />
             <p className="mono" style={{ margin: 0 }}>{user.eco_id}</p>
           </div>
         </div>
       </div>
-
-      {/* Drop-off history */}
-      <Card title="Recent drop-offs">
-        {drops.error && <Notice kind="error">{drops.error}</Notice>}
-        <Table
-          columns={[
-            { key: 'created_at', label: 'Date', render: (r) => fmtDate(r.created_at) },
-            { key: 'material', label: 'Material', render: (r) => cap(r.material) },
-            { key: 'qty', label: 'Qty', render: (r) => (r.unit === 'pcs' ? `${r.quantity} pcs` : `${parseFloat(r.quantity ?? r.weight_kg)} kg`) },
-            { key: 'points', label: 'Points', render: (r) => Number(r.points) },
-            { key: 'photo', label: 'Photo', render: (r) => (r.photo_url ? <img className="table-thumb" src={r.photo_url} alt="Recyclables" /> : '—') }
-          ]}
-          rows={dropRows.slice(0, 8)}
-          empty="No drop-offs yet. Bring your sorted recyclables to a hub."
-        />
-      </Card>
 
       <div className="rd-banner">
         <h3>Together for a Cleaner Community</h3>

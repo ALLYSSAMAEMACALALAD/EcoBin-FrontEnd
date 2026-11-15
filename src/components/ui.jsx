@@ -19,10 +19,10 @@ export function Card({ title, actions, children }) {
   );
 }
 
-export function Table({ columns, rows, empty = 'Nothing to show yet.' }) {
+export function Table({ columns, rows, empty = 'Nothing to show yet.', className = '' }) {
   if (!rows?.length) return <p className="muted">{empty}</p>;
   return (
-    <div className="table-wrap">
+    <div className={`table-wrap${className ? ` ${className}` : ''}`}>
       <table>
         <thead><tr>{columns.map((c) => <th key={c.key}>{c.label}</th>)}</tr></thead>
         <tbody>

@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
-import './Login.css';
 
 export default function Login() {
   const { login } = useAuth();
@@ -17,7 +15,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setBusy(true);
-
     try {
       const user = await login(email, password);
       window.location.assign(ROLE_HOME[user.role]);
@@ -31,21 +28,12 @@ export default function Login() {
   return (
     <div className="lg-page">
       <div className="lg-card">
-
-        {/* Left: Brand Panel */}
+        {/* Left: brand panel */}
         <aside className="lg-left">
           <div className="lg-logo-mark">♻️</div>
-
           <div className="lg-brand">EcoBin</div>
-
-          <p className="lg-tag">
-            Recycle. Earn. Keep it Green.
-          </p>
-
-          <div className="lg-mascot" aria-hidden="true">
-            🗑️
-          </div>
-
+          <p className="lg-tag">Recycle. Earn. Keep it Green.</p>
+          <div className="lg-mascot" aria-hidden="true">🗑️</div>
           <div className="lg-banner">
             <span className="lg-banner-icon">🌱</span>
             <span>
@@ -55,27 +43,16 @@ export default function Login() {
           </div>
         </aside>
 
-        {/* Right: Login Form */}
+        {/* Right: login form */}
         <section className="lg-right">
-
-          <h1 className="lg-title">
-            Welcome Back! <span className="lg-leaf">🍃</span>
-          </h1>
-
-          <p className="lg-sub">
-            Log in to your EcoBin account
-          </p>
+          <h1 className="lg-title">Welcome Back! <span className="lg-leaf">🍃</span></h1>
+          <p className="lg-sub">Log in to your EcoBin account</p>
 
           <Notice kind="error">{error}</Notice>
 
           <form onSubmit={submit} className="lg-form">
-
-            {/* Email */}
             <div className="lg-field">
-              <span className="lg-field-icon" aria-hidden="true">
-                👤
-              </span>
-
+              <span className="lg-field-icon" aria-hidden="true">👤</span>
               <input
                 type="email"
                 placeholder="Email or Username"
@@ -87,12 +64,8 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
             <div className="lg-field">
-              <span className="lg-field-icon" aria-hidden="true">
-                🔒
-              </span>
-
+              <span className="lg-field-icon" aria-hidden="true">🔒</span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
@@ -102,46 +75,28 @@ export default function Login() {
                 required
                 autoComplete="current-password"
               />
-
               <button
                 type="button"
                 className="lg-eye"
                 onClick={() => setShowPassword((s) => !s)}
-                aria-label={
-                  showPassword ? 'Hide password' : 'Show password'
-                }
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
 
-            {/* Forgot password */}
-            <p className="lg-forgot">
-              <Link className="lg-link" to="/forgot-password">
-                Forgot password?
-              </Link>
-            </p>
+            <p className="lg-forgot"><Link className="lg-link" to="/forgot-password">Forgot password?</Link></p>
 
-            {/* Login Button */}
-            <button
-              className="lg-btn-primary"
-              type="submit"
-              disabled={busy}
-            >
+            <button className="lg-btn-primary" type="submit" disabled={busy}>
               <span aria-hidden="true">⇥</span>
               {busy ? 'Logging in…' : 'Log In'}
             </button>
-
           </form>
 
-          {/* Register Link */}
           <p className="lg-footer">
             Already have an account?{' '}
-            <Link className="lg-link" to="/register">
-              Sign Up
-            </Link>
+            <Link className="lg-link" to="/register">Sign Up</Link>
           </p>
-
         </section>
       </div>
     </div>

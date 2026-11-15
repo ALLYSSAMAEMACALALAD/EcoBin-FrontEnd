@@ -1,5 +1,5 @@
-/** Dark green hero band used at the top of every page. `aside` renders as the light card on the right. */
-export default function PageHero({ eyebrow, title, text, actions, aside, icon = '♻' }) {
+/** Dark green header band used at the top of a page. `aside` renders as the quiet card on the right. */
+export default function PageHero({ eyebrow, title, text, actions, aside }) {
   return (
     <section className="hero">
       <div className="hero-inner">
@@ -11,7 +11,6 @@ export default function PageHero({ eyebrow, title, text, actions, aside, icon = 
         </div>
         {aside && (
           <div className="hero-card">
-            <div className="hero-icon" aria-hidden="true">{icon}</div>
             {aside}
           </div>
         )}

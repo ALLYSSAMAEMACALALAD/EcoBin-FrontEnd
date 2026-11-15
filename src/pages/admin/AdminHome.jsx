@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import { jsPDF } from 'jspdf';
@@ -20,10 +20,12 @@ const NAV_ITEMS = [
   ['redemptions', '🎟️', 'Redemptions'],
   ['tickets', '⚠️', 'Dumping Tickets'],
   ['reports', '📊', 'Reports & Analytics'],
+  ['hubs', '📍', 'Pickup Hubs'],
 ];
 
 const PAGE_TITLES = Object.fromEntries(NAV_ITEMS.map(([k, , label]) => [k, label]));
 
+// [key, icon, label, tone]
 const QUICK_ACTIONS = [
   ['users', '👥', 'Manage Users', 'tone-green'],
   ['reports', '📊', 'View Reports', 'tone-blue'],
@@ -104,6 +106,7 @@ export default function AdminHome() {
               {tab === 'tickets' && <Tickets />}
               {tab === 'inventory' && <RewardsInventory />}
               {tab === 'reports' && <ReportsHub />}
+              {tab === 'hubs' && <Hubs />}
             </>
           )}
         </div>
@@ -112,29 +115,21 @@ export default function AdminHome() {
   );
 }
 
-// Gets the count for one status from the analytics rows
-const countOf = (rows = [], status) => Number(rows.find((r) => r.status === status)?.n || 0);
-
 // Formats a date as YYYY-MM-DD in local time
 const isoLocal = (d) => d.toLocaleDateString('en-CA');
 
 function Dashboard({ firstName, onNavigate }) {
-  const [msg, setMsg] = useState({ kind: 'info', text: '' });
   const a = useLoader(() => api('/analytics'));
-  const reports = useLoader(() => api('/dumping-reports'));
-  const routes = useLoader(() => api('/routes'));
   const hubs = useLoader(() => api('/hubs'));
   const users = useLoader(() => api('/admin/users'));
   const collectors = useLoader(() => api('/admin/users?role=collector'));
   const redemptions = useLoader(() => api('/redemptions'));
-  const history = useLoader(() => api('/reports/history'));
+  const reports = useLoader(() => api('/dumping-reports'));
 
   if (a.loading) return <p className="muted">Loading…</p>;
   if (a.error) return <Notice kind="error">{a.error}</Notice>;
 
   const t = a.data.totals;
-  const dumping = a.data.dumping_by_status;
-  const redemptionStatus = a.data.redemptions_by_status;
 
   const stats = [
     { icon: '👤', label: 'Total Users', value: (users.data?.users?.length ?? 0).toLocaleString(), tone: 'tone-green' },
@@ -143,34 +138,15 @@ function Dashboard({ firstName, onNavigate }) {
     { icon: '♻️', label: 'Total Waste Collected', value: `${Number(t.kg_recycled || 0).toLocaleString()} kg`, tone: 'tone-green' },
   ];
 
-  const strip = [
-    ['Open reports', countOf(dumping, 'open')],
-    ['In progress', countOf(dumping, 'investigating')],
-    ['Resolved reports', countOf(dumping, 'resolved')],
-    ['Pending redemptions', countOf(redemptionStatus, 'pending')],
-    ['Points awarded', Number(t.points_issued || 0).toLocaleString()],
-  ];
-
-  const chartData = (a.data.dropoffs_last_14_days || []).map((d) => ({
-    day: String(d.day).slice(5),
-    kg: Number(d.kg) || 0,
-  }));
-
-  const recentReports = (reports.data?.reports || []).slice(0, 5);
-
   const activity = [
     ...(redemptions.data?.redemptions || []).map((r) => ({
       key: `r${r.id}`,
-      icon: '🎁',
-      tone: 'tone-amber',
       title: 'Reward redemption requested',
       sub: `${r.resident_name} · ${r.reward_name}`,
       at: r.created_at,
     })),
     ...(reports.data?.reports || []).map((r) => ({
       key: `d${r.id}`,
-      icon: '⚠️',
-      tone: 'tone-orange',
       title: 'Dumping ticket filed',
       sub: `${r.ticket_no} · ${r.location}`,
       at: r.created_at,
@@ -179,39 +155,12 @@ function Dashboard({ firstName, onNavigate }) {
     .sort((x, y) => String(y.at).localeCompare(String(x.at)))
     .slice(0, 5);
 
-  const today = new Date();
-  const weekEnd = new Date();
-  weekEnd.setDate(today.getDate() + 7);
-  const startStr = isoLocal(today);
-  const endStr = isoLocal(weekEnd);
-  const upcoming = (routes.data?.routes || []).filter((r) => r.route_date >= startStr && r.route_date <= endStr);
-
-  const recentGenerated = (history.data?.reports || []).slice(0, 5);
-
-  function pdfReport(r) {
-    try {
-      downloadPdf(r.title, `Period: ${r.from} to ${r.to}`, r.tables || [], `ecobin-report-${r.period}-${r.to}.pdf`);
-    } catch (err) {
-      setMsg({ kind: 'error', text: `Unable to generate PDF: ${err.message}` });
-    }
-  }
-
-  function csvReport(r) {
-    downloadFile(
-      `ecobin-report-${r.period}-${r.to}.csv`,
-      '\uFEFF' + tablesToCsv(r.tables || []),
-      'text/csv;charset=utf-8'
-    );
-  }
-
   return (
     <>
       <section className="ad-hero">
         <h1>Welcome back, {firstName}! 🌿</h1>
         <p>Here's what's happening in EcoBin today.</p>
       </section>
-
-      {msg.text && <Notice kind={msg.kind}>{msg.text}</Notice>}
 
       <div className="ad-stats">
         {stats.map((s) => (
@@ -225,40 +174,19 @@ function Dashboard({ firstName, onNavigate }) {
         ))}
       </div>
 
-      <div className="ad-strip">
-        {strip.map(([label, value]) => (
-          <div className="ad-strip-item" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-
       <div className="ad-row">
         <div className="ad-card">
           <div className="ad-card-head">
-            <h3>Collection Overview</h3>
-            <span className="ad-chip">Last 14 days</span>
+            <h3>Quick Actions</h3>
           </div>
-          {chartData.length ? (
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="adArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2d7a4f" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#2d7a4f" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e1e8da" vertical={false} />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} unit=" kg" />
-                <Tooltip formatter={(v) => `${v} kg`} />
-                <Area type="monotone" dataKey="kg" stroke="#2d7a4f" strokeWidth={2.5} fill="url(#adArea)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="muted">No drop-offs in the last 14 days.</p>
-          )}
+          <div className="ad-quick">
+            {QUICK_ACTIONS.map(([key, icon, label, tone]) => (
+              <button key={key} type="button" className={`ad-quick-btn ${tone}`} onClick={() => onNavigate(key)}>
+                <span aria-hidden="true">{icon}</span>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="ad-card">
@@ -269,7 +197,7 @@ function Dashboard({ firstName, onNavigate }) {
             <ul className="ad-activity">
               {activity.map((item) => (
                 <li key={item.key}>
-                  <div className={`ad-act-icon ${item.tone}`}>{item.icon}</div>
+                  <div className="ad-act-dot" />
                   <div className="ad-act-main">
                     <div className="ad-act-title">{item.title}</div>
                     <div className="ad-act-sub">{item.sub}</div>
@@ -280,89 +208,6 @@ function Dashboard({ firstName, onNavigate }) {
             </ul>
           ) : (
             <p className="muted">No activity yet.</p>
-          )}
-        </div>
-      </div>
-
-      <div className="ad-row">
-        <div className="ad-card">
-          <div className="ad-card-head">
-            <h3>Recent dumping reports</h3>
-          </div>
-          <Table
-            columns={[
-              { key: 'ticket_no', label: '#' },
-              { key: 'location', label: 'Location' },
-              { key: 'status', label: 'Status', render: (r) => <span className={`badge s-${r.status}`}>{cap(r.status)}</span> },
-            ]}
-            rows={recentReports}
-            empty="No recent reports."
-          />
-        </div>
-
-        <div className="ad-card">
-          <div className="ad-card-head">
-            <h3>Quick Actions</h3>
-          </div>
-          <div className="ad-quick">
-            {QUICK_ACTIONS.map(([key, icon, label, tone]) => (
-              <button
-                key={key}
-                type="button"
-                className={`ad-quick-btn ${tone}`}
-                onClick={() => onNavigate(key)}
-              >
-                <span>{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="ad-row">
-        <div className="ad-card">
-          <div className="ad-card-head">
-            <h3>Recent generated reports</h3>
-            <button className="btn ghost small" type="button" onClick={() => onNavigate('reports')}>
-              See All →
-            </button>
-          </div>
-          <Table
-            columns={[
-              { key: 'title', label: 'Report Title' },
-              { key: 'created_at', label: 'Date Generated', render: (r) => fmtDate(r.created_at) },
-              {
-                key: 'act',
-                label: 'Action',
-                render: (r) => (
-                  <span className="row">
-                    <button className="btn small" type="button" onClick={() => pdfReport(r)}>PDF</button>
-                    <button className="btn small ghost" type="button" onClick={() => csvReport(r)}>CSV</button>
-                  </span>
-                ),
-              },
-            ]}
-            rows={recentGenerated}
-            empty="No reports generated yet."
-          />
-        </div>
-
-        <div className="ad-card">
-          <div className="ad-card-head">
-            <h3>Collections in the next 7 days</h3>
-          </div>
-          {upcoming.length ? (
-            <Table
-              columns={[
-                { key: 'name', label: 'Route' },
-                { key: 'route_date', label: 'Date' },
-                { key: 'status', label: 'Status', render: (r) => cap(r.status) },
-              ]}
-              rows={upcoming}
-            />
-          ) : (
-            <p className="muted">No collections scheduled this week.</p>
           )}
         </div>
       </div>
@@ -386,7 +231,7 @@ function Dashboard({ firstName, onNavigate }) {
           <h3>Reduce. Reuse. Recycle.</h3>
           <p>A sustainable future starts with us.</p>
         </div>
-        <span className="ad-banner-icon">♻️</span>
+        <span className="ad-banner-art" aria-hidden="true">♻️</span>
       </div>
     </>
   );
@@ -2000,7 +1845,7 @@ function ReportGenerate({ data, filters, onSaved }) {
 }
 
 function reportDateParts(v) {
-  if (!v) return { date: '—', time: '' };
+  if (!v) return { date: '', time: '' };
   const d = new Date(String(v).replace(' ', 'T'));
   if (Number.isNaN(d.getTime())) return { date: String(v), time: '' };
   return {
@@ -2092,5 +1937,138 @@ function ReportHistory({ history }) {
         />
       </div>
     </Card>
+  );
+}
+
+// ==========================================
+// PICKUP HUBS — admin manages the drop-off points
+// ==========================================
+
+const EMPTY_HUB = { name: '', address: '' };
+
+function Hubs() {
+  const hubs = useLoader(() => api('/hubs'));
+  const [form, setForm] = useState(EMPTY_HUB);
+  const [editing, setEditing] = useState(null);
+  const [msg, setMsg] = useState({ kind: 'info', text: '' });
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState('');
+
+  const list = hubs.data?.hubs || [];
+  const needle = filter.trim().toLowerCase();
+  const visible = needle
+    ? list.filter((h) => `${h.name || ''} ${h.address || ''}`.toLowerCase().includes(needle))
+    : list;
+
+  const setField = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  function startEdit(h) {
+    setEditing(h.id);
+    setForm({ name: h.name || '', address: h.address || '' });
+    setMsg({ kind: 'info', text: '' });
+  }
+
+  function cancelEdit() {
+    setEditing(null);
+    setForm(EMPTY_HUB);
+  }
+
+  async function save(e) {
+    e.preventDefault();
+    if (!form.name.trim()) {
+      setMsg({ kind: 'error', text: 'Hub name is required.' });
+      return;
+    }
+    setBusy(true);
+    setMsg({ kind: 'info', text: '' });
+    try {
+      const body = { name: form.name.trim(), address: form.address.trim() || null };
+      if (editing) await api(`/hubs/${editing}`, { method: 'PUT', body });
+      else await api('/hubs', { method: 'POST', body });
+      setMsg({ kind: 'success', text: editing ? 'Hub updated.' : 'Pickup hub added.' });
+      setForm(EMPTY_HUB);
+      setEditing(null);
+      hubs.reload();
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message || 'Unable to save the hub.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(h) {
+    if (!confirm(`Remove "${h.name}"? Drop-off logs keep their records; the hub is unlinked from them.`)) return;
+    try {
+      await api(`/hubs/${h.id}`, { method: 'DELETE' });
+      if (editing === h.id) cancelEdit();
+      setMsg({ kind: 'success', text: 'Hub removed.' });
+      hubs.reload();
+    } catch (err) {
+      setMsg({ kind: 'error', text: err.message || 'Unable to remove the hub.' });
+    }
+  }
+
+  return (
+    <>
+      <Card title={editing ? 'Edit pickup hub' : 'Add pickup hub'}>
+        <Notice kind={msg.kind}>{msg.text}</Notice>
+        <form className="stack" onSubmit={save}>
+          <div className="grid-2">
+            <label>Hub name
+              <input
+                value={form.name}
+                onChange={setField('name')}
+                placeholder="e.g. Barangay Hall Drop-off Hub"
+                maxLength={120}
+                required
+              />
+            </label>
+            <label>Address (optional)
+              <input
+                value={form.address}
+                onChange={setField('address')}
+                placeholder="e.g. Barangay Hall, Main Road"
+                maxLength={255}
+              />
+            </label>
+          </div>
+          <div className="row">
+            <button className="btn primary" type="submit" disabled={busy || !form.name.trim()}>
+              {busy ? 'Saving…' : editing ? 'Save hub' : 'Add hub'}
+            </button>
+            {editing && <button type="button" className="btn ghost" onClick={cancelEdit}>Cancel</button>}
+          </div>
+        </form>
+      </Card>
+
+      <Card
+        title={`Pickup hubs (${list.length})`}
+        actions={(
+          <input
+            type="text"
+            className="ad-mini-search"
+            placeholder="Filter by name or address…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            aria-label="Filter hubs"
+          />
+        )}
+      >
+        <Table
+          columns={[
+            { key: 'name', label: 'Name' },
+            { key: 'address', label: 'Address', render: (h) => h.address || <span className="muted">Not set</span> },
+            { key: 'act', label: '', render: (h) => (
+              <span className="row" style={{ gap: 6 }}>
+                <button className="btn small" type="button" onClick={() => startEdit(h)}>Edit</button>
+                <button className="btn small danger" type="button" onClick={() => remove(h)}>Delete</button>
+              </span>
+            ) },
+          ]}
+          rows={visible}
+          empty={needle ? 'No hubs match that filter.' : 'No pickup hubs yet. Add the first one above.'}
+        />
+      </Card>
+    </>
   );
 }
