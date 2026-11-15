@@ -1584,3 +1584,33 @@ h1 {
     font-size:1.35rem
   }
 }
+
+/* ================= Small-screen hardening ================= */
+img, video, canvas, iframe, object, embed { max-width: 100%; }
+
+.password-checklist li span { width: 16px; }
+.mono { overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .topbar .brand-name { font-size: 1.15rem; }
+  .topbar .brand-tile { width: 38px; height: 38px; font-size: 1.1rem; border-radius: 10px; }
+  .topbar .who { gap: 8px; }
+  .topbar .who .muted { font-size: .82rem; }
+  .signout { padding: 6px 10px; font-size: .9rem; }
+
+  .fp-mascot, .lg-mascot, .rg-mascot { font-size: 84px; }
+  .fp-banner, .lg-banner, .rg-banner { padding: 12px 14px; font-size: .85rem; }
+  .fp-field, .lg-field, .rg-field { height: 52px; padding: 0 14px; }
+
+  .qr, .rd-qr-svg { max-width: 100%; }
+}
+
+@media (max-width: 380px) {
+  .fp-mascot, .lg-mascot, .rg-mascot { font-size: 68px; }
+  .hero h1 { font-size: 1.8rem !important; }
+  .content > :not(.hero) { width: 100%; padding-left: 6px; padding-right: 6px; box-sizing: border-box; }
+}

@@ -718,31 +718,40 @@
 }
 
 @media (max-width: 480px) {
+  .cd-list-meta { white-space: normal; text-align: right; }
+  .cd-list { font-size: .9rem; }
+  .cd-list-icon { width: 36px; height: 36px; font-size: 16px; }
+  .cd-tile { padding: 16px; }
+  .cd-big { font-size: 36px; }
+  .cd-stats-body { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
 .cd-shell {
     width:100%!important;
     margin-left:0!important;
     margin-right:0!important
   }
 
-.cd-nav button {
+  .cd-nav button {
     padding:8px 10px;
     font-size:12px
   }
 
-.cd-nav-icon {
+  .cd-nav-icon {
     width:18px;
     font-size:14px
   }
 
-.cd-main {
+  .cd-main {
     padding:12px 10px 28px
   }
 
-.cd-hero h1 {
+  .cd-hero h1 {
     font-size:22px
   }
 
-.cd-main .card {
+  .cd-main .card {
     padding:16px;
     margin-bottom:12px
   }
