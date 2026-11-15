@@ -73,15 +73,27 @@ const extractEcoId = (raw) => {
 export default function CollectorHome() {
   const { user, logout } = useAuth();
   const [tab, setTab] = useState('overview');
+  const [navOpen, setNavOpen] = useState(false);
   const firstName = (user?.name || '').split(' ')[0] || 'Collector';
   const initial = firstName.charAt(0).toUpperCase();
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
   const weekday = now.toLocaleDateString('en-PH', { weekday: 'long' });
 
+  // Close the mobile drawer on Escape and prevent body scroll while it is open.
+  useEffect(() => {
+    if (!navOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [navOpen]);
+
+  const navTo = (key) => { setTab(key); setNavOpen(false); };
+
   return (
     <div className="cd-shell">
-      <aside className="cd-sidebar">
+      <aside className={`cd-sidebar${navOpen ? ' open' : ''}`}>
         <div className="cd-brand">
           <div className="cd-brand-tile">♻️</div>
           <div className="cd-brand-name">Eco<span>Bin</span></div>
@@ -101,7 +113,7 @@ export default function CollectorHome() {
               key={key}
               type="button"
               className={tab === key ? 'active' : ''}
-              onClick={() => setTab(key)}
+              onClick={() => navTo(key)}
             >
               <span className="cd-nav-icon">{icon}</span>
               {label}
@@ -120,7 +132,12 @@ export default function CollectorHome() {
         </div>
       </aside>
 
+      {navOpen && <div className="cd-overlay" onClick={() => setNavOpen(false)} aria-hidden="true" />}
+
       <main className="cd-main">
+        <button type="button" className="cd-burger" onClick={() => setNavOpen(v => !v)} aria-expanded={navOpen} aria-controls="cd-drawer">
+          <span aria-hidden="true">☰</span> Menu
+        </button>
         <header className="cd-topbar">
           <div className="cd-bell" aria-label="Notifications">
             🔔
