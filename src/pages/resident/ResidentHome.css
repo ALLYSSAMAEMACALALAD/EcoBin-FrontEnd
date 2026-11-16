@@ -70,7 +70,7 @@
 .rd-hero p { margin: 0; font-size: 15px; color: var(--ink-soft); }
 
 /* ---------- Stat cards ---------- */
-.rd-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.rd-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
 .rd-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .rd-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .rd-row > .card, .rd-row-2 > .card, .rd-row > * { margin-bottom: 0; }
@@ -564,7 +564,7 @@
 }
 
 .rd-stats {
-  grid-template-columns:repeat(3,minmax(0,1fr))
+  grid-template-columns:repeat(2,minmax(0,1fr))
 }
 
 .rd-shell .rd-stat {
@@ -811,10 +811,12 @@
 }
 
 .rd-action-icon {
-  color:var(--accent-text);
-  display:grid;
-  place-items:center
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--green-soft); color: var(--green-bright);
+  transition: transform .18s ease;
 }
+.rd-action:hover .rd-action-icon { transform: scale(1.08); }
 
 /* buttons */
 .rd-shell .btn.primary {

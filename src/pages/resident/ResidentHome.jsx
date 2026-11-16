@@ -12,6 +12,7 @@ import {
   cap
 } from '../../components/ui.jsx';
 import { LeafIcon, ArrowRightIcon } from '../../components/icons.jsx';
+import Ico from '../../components/Ico.jsx';
 import { compressImage } from '../../lib/image.js';
 import { downloadCertificate } from '../../lib/certificate.js';
 import './ResidentHome.css';
@@ -76,32 +77,6 @@ function getBalance(response) {
   }
 
   return null;
-}
-
-// Eco status based on points. Used in the "Eco Status" card.
-const ECO_TIERS = [
-  { min: 0, name: 'Eco Starter' },
-  { min: 100, name: 'Eco Helper' },
-  { min: 300, name: 'Green Champion' },
-  { min: 750, name: 'Eco Hero' }
-];
-
-function ecoTier(points) {
-  if (points == null) return { name: '—', progress: 0, next: null, needed: 0 };
-
-  let idx = 0;
-  ECO_TIERS.forEach((t, i) => { if (points >= t.min) idx = i; });
-
-  const cur = ECO_TIERS[idx];
-  const nxt = ECO_TIERS[idx + 1];
-  const progress = nxt ? (points - cur.min) / (nxt.min - cur.min) : 1;
-
-  return {
-    name: cur.name,
-    progress: Math.min(1, Math.max(0, progress)),
-    next: nxt?.name ?? null,
-    needed: nxt ? nxt.min - points : 0
-  };
 }
 
 // Finds the next upcoming pickup from the resident's routes
@@ -271,7 +246,6 @@ function Overview({ onNavigate }) {
   const routes = useLoader(() => api('/routes'));
 
   const points = getBalance(balance.data);
-  const tier = ecoTier(points);
   const dropRows = drops.data?.dropoffs || [];
   const totalKg = dropRows.reduce((sum, d) => sum + Number(d.weight_kg || 0), 0);
   const recentBars = dropRows.slice(0, 8).reverse();
@@ -296,17 +270,6 @@ function Overview({ onNavigate }) {
           >
             View Rewards →
           </button>
-        </div>
-
-        <div className="card rd-glow">
-          <div className="rd-stat-label">Your Eco Status</div>
-          <div className="rd-stat-value" style={{ fontSize: 30 }}>{tier.name}</div>
-          <div className="rd-stat-sub">
-            {tier.next ? `${tier.needed} pts to go until ${tier.next}` : "You've reached the highest level!"}
-          </div>
-          <div className="rd-progress">
-            <span style={{ width: `${tier.progress * 100}%` }} />
-          </div>
         </div>
 
         <div className="card rd-glow">
@@ -362,20 +325,20 @@ function Overview({ onNavigate }) {
           </div>
           <div className="rd-actions">
             <button type="button" className="rd-action" onClick={() => onNavigate('report')}>
+              <span className="rd-action-icon" aria-hidden="true"><Ico n="report" size={26} /></span>
               Report dumping
-              <ArrowRightIcon size={16} />
             </button>
             <button type="button" className="rd-action" onClick={() => onNavigate('rewards')}>
+              <span className="rd-action-icon" aria-hidden="true"><Ico n="rewards" size={26} /></span>
               Check rewards
-              <ArrowRightIcon size={16} />
             </button>
             <button type="button" className="rd-action" onClick={() => onNavigate('guide')}>
+              <span className="rd-action-icon" aria-hidden="true"><Ico n="guide" size={26} /></span>
               Segregation guide
-              <ArrowRightIcon size={16} />
             </button>
             <button type="button" className="rd-action" onClick={() => onNavigate('schedule')}>
+              <span className="rd-action-icon" aria-hidden="true"><Ico n="schedule" size={26} /></span>
               Collection schedule
-              <ArrowRightIcon size={16} />
             </button>
           </div>
         </div>
