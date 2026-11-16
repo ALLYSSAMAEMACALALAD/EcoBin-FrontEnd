@@ -253,9 +253,16 @@ function Overview({ onNavigate }) {
 
   return (
     <>
+      {/* Tip ribbon */}
+      <div className="rd-tip">
+        <span aria-hidden="true">🍃</span>
+        <span><strong>Did you know?</strong> Rinse bottles before drop-off — clean recyclables get credited faster and smell better at the hub!</span>
+      </div>
+
       {/* Stat cards */}
       <div className="rd-stats">
-        <div className="card rd-glow">
+        <div className="card rd-glow rd-stat-card">
+          <span className="rd-stat-icon" aria-hidden="true"><Ico n="leaf" size={22} /></span>
           <div className="rd-stat-label">Your Points</div>
           <div className="rd-stat-value">
             {points !== null ? `${points} pts` : balance.loading ? '...' : '—'}
@@ -271,7 +278,8 @@ function Overview({ onNavigate }) {
           </button>
         </div>
 
-        <div className="card rd-glow">
+        <div className="card rd-glow rd-stat-card">
+          <span className="rd-stat-icon truck" aria-hidden="true"><Ico n="truck" size={22} /></span>
           <div className="rd-stat-label">Next Collection</div>
           {routes.loading ? (
             <div className="rd-stat-sub">Loading…</div>
@@ -301,6 +309,7 @@ function Overview({ onNavigate }) {
         <div className="card">
           <div className="rd-card-head">
             <h3 className="rd-card-title">Recycling Impact</h3>
+            <span className="rd-chip">{dropRows.length} drop-off{dropRows.length === 1 ? '' : 's'}</span>
           </div>
           <div className="rd-stat-value" style={{ marginTop: 0 }}>
             {totalKg.toLocaleString(undefined, { maximumFractionDigits: 2 })} kg
@@ -354,7 +363,7 @@ function Overview({ onNavigate }) {
             <ul className="rd-activity">
               {dropRows.slice(0, 4).map((d) => (
                 <li key={d.id ?? d.created_at}>
-                  <span className="rd-dot" />
+                  <span className="rd-activity-icon"><Ico n="leaf" size={15} /></span>
                   <div>
                     <div className="rd-activity-text">
                       You earned {d.points} pts for a {cap(d.material)} drop-off ({d.unit === 'pcs' ? `${d.quantity} pcs` : `${parseFloat(d.weight_kg)} kg`})
@@ -386,8 +395,11 @@ function Overview({ onNavigate }) {
       </div>
 
       <div className="rd-banner">
-        <h3>Together for a Cleaner Community</h3>
-        <p>Reduce. Reuse. Recycle.</p>
+        <div>
+          <h3>Together for a Cleaner Community</h3>
+          <p>Reduce. Reuse. Recycle. Every bottle counts!</p>
+        </div>
+        <span className="rd-banner-art" aria-hidden="true">♻️</span>
       </div>
     </>
   );

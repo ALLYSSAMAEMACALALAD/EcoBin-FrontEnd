@@ -110,6 +110,14 @@ body.light .rs-logout:hover { background: var(--green-soft-2); color: var(--gree
 }
 .rs-hero h1 { font-size: 32px; font-weight: 800; margin: 0 0 8px; color: var(--ink); letter-spacing: -.025em; display: flex; align-items: center; gap: 10px; }
 .rs-hero p { margin: 0; font-size: 15px; color: var(--ink-soft); }
+.rs-hero::after {
+  content: "♻️";
+  position: absolute; right: 26px; top: 50%; transform: translateY(-50%);
+  font-size: 96px; opacity: .28; pointer-events: none;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,.25));
+}
+@media (max-width: 640px) { .rs-hero::after { font-size: 66px; right: 12px; } }
+@media (max-width: 460px) { .rs-hero::after { display: none; } }
 
 /* ---------- Mobile drawer ---------- */
 .rs-burger { display: none; }

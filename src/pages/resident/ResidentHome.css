@@ -134,7 +134,13 @@
   background: var(--grad-banner);
   border: 1px solid rgba(61,220,132,.2);
   color: var(--ink); box-shadow: var(--shadow-soft);
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
 }
+.rd-banner h3 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 4px; color: var(--ink); }
+.rd-banner p { margin: 0; color: var(--ink-soft); }
+.rd-banner-art { font-size: 72px; line-height: 1; filter: drop-shadow(0 6px 14px rgba(0,0,0,.25)); animation: banner-bob 4s ease-in-out infinite; }
+@keyframes banner-bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(4deg); } }
+@media (max-width: 640px) { .rd-banner-art { font-size: 52px; } }
 .rd-banner h3 { font-size: 23px; margin: 0 0 4px; color: var(--ink); font-weight: 800; }
 .rd-banner p { margin: 0; color: var(--ink-soft); }
 
@@ -938,4 +944,43 @@
 }
 }
 
+
+
+/* ========= Visual enrichments (Nov 2026) ========= */
+.rd-tip {
+  display: flex; align-items: center; gap: 12px;
+  margin: -6px 0 20px;
+  background: linear-gradient(90deg, var(--green-soft-2), transparent 70%);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--green-strong);
+  border-radius: 14px;
+  padding: 10px 16px;
+  color: var(--ink-soft); font-size: 13px; line-height: 1.5;
+}
+.rd-tip strong { color: var(--green-bright); }
+
+.rd-stat-card { position: relative; padding-right: 72px; overflow: hidden; }
+.rd-stat-icon {
+  position: absolute; top: 18px; right: 18px;
+  width: 48px; height: 48px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: var(--green-soft); color: var(--green-bright);
+}
+.rd-stat-icon.truck { background: var(--tone-blue-bg); color: var(--tone-blue); }
+
+.rd-chip {
+  font-size: 12px; font-weight: 700; color: var(--green-bright);
+  background: var(--green-soft); border-radius: 999px; padding: 4px 12px; white-space: nowrap;
+}
+
+.rd-activity-icon {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center; margin-top: 2px;
+  background: var(--green-soft); color: var(--green-bright);
+}
+
+/* chunkier impact bars */
+.rd-bars { height: 128px; gap: 9px; align-items: flex-end; }
+.rd-bar { flex: 1; min-height: 6px; border-radius: 9px 9px 3px 3px; }
+.rd-bar:hover { filter: brightness(1.15); }
 
