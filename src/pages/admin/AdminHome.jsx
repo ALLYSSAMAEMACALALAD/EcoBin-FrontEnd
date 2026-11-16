@@ -107,7 +107,6 @@ export default function AdminHome() {
       onTab={setTab}
       role="admin"
       roleLabel="Administrator"
-      searchPlaceholder="Search pages… (e.g. redemptions, routes, users)"
       notifSources={{ drops: true, reports: true, redemptions: true }}
       buildNotifs={buildNotifs}
     >

@@ -134,7 +134,6 @@ export default function ResidentHome() {
       role="resident"
       roleLabel="Resident"
       hero={hero}
-      searchPlaceholder="Search anything… (e.g. rewards, schedule)"
       notifSources={{ drops: true, reports: true, schedules: true }}
       buildNotifs={buildNotifs}
     >

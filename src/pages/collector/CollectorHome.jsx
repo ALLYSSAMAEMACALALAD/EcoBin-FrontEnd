@@ -144,7 +144,6 @@ export default function CollectorHome() {
       role="collector"
       roleLabel="Collector / Driver"
       hero={hero}
-      searchPlaceholder="Search pages… (e.g. route, drop-off, tickets)"
       notifSources={{ drops: true, reports: true, routes: true }}
       buildNotifs={buildNotifs}
     >

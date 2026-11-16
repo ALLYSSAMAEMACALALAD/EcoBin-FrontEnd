@@ -8,7 +8,7 @@ import './role-shell.css';
  * Shared dashboard shell (sidebar + topbar + optional hero) for resident / collector / admin.
  *
  * Props:
- *   navItems      — [key, iconName, label, searchKeywords]
+ *   navItems      — [key, iconName, label, searchKeywords?] (4th element ignored)
  *   tab, onTab    — controlled active tab
  *   role          — role key ('resident' | 'collector' | 'admin') for notif storage keys
  *   roleLabel     — display name, e.g. 'Collector / Driver'
@@ -20,12 +20,10 @@ import './role-shell.css';
 export default function RoleShell({
   navItems, tab, onTab, role, roleLabel,
   hero = null,
-  searchPlaceholder = 'Search pages…',
   notifSources = {}, buildNotifs,
   children,
 }) {
   const { user, logout } = useAuth();
-  const [query, setQuery] = useState('');
   const [navOpen, setNavOpen] = useState(false);
 
   const firstName = (user?.name || '').split(' ')[0] || roleLabel;
@@ -39,18 +37,6 @@ export default function RoleShell({
     document.body.style.overflow = 'hidden';
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
   }, [navOpen]);
-
-  function onSearch(e) {
-    e.preventDefault();
-    const q = query.trim().toLowerCase();
-    if (!q) return;
-    const hit = navItems.find(([, , label, words]) => `${label} ${words || ''}`.toLowerCase().includes(q));
-    if (hit) {
-      onTab(hit[0]);
-      setQuery('');
-      setNavOpen(false);
-    }
-  }
 
   const navTo = (key) => { onTab(key); setNavOpen(false); };
 
@@ -98,17 +84,6 @@ export default function RoleShell({
         </button>
 
         <header className="rs-topbar">
-          <form className="rs-search" onSubmit={onSearch} role="search">
-            <Ico n="search" size={18} />
-            <input
-              type="search"
-              placeholder={searchPlaceholder}
-              aria-label="Search pages"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </form>
-
           <NotificationBell
             role={role}
             sources={notifSources}
