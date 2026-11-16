@@ -343,28 +343,6 @@ function Overview({ onNavigate }) {
           </div>
         </div>
 
-        <div className="card">
-          <div className="rd-card-head">
-            <h3 className="rd-card-title">Your Rewards</h3>
-            <button type="button" className="btn ghost small" onClick={() => onNavigate('rewards')}>
-              See All →
-            </button>
-          </div>
-          <div className="rd-reward-grid">
-            {rewardCatalog.slice(0, 3).map((r) => (
-              <button
-                key={r.name}
-                type="button"
-                className="rd-reward"
-                onClick={() => onNavigate('rewards')}
-              >
-                <span className="rd-reward-mark"><LeafIcon size={22} /></span>
-                <span className="rd-reward-name">{r.name}</span>
-                <span className="rd-reward-pts">{r.points_cost} pts</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Activity and eco-ID */}
@@ -407,22 +385,6 @@ function Overview({ onNavigate }) {
           </div>
         </div>
       </div>
-
-      {/* Drop-off history */}
-      <Card title="Recent drop-offs">
-        {drops.error && <Notice kind="error">{drops.error}</Notice>}
-        <Table
-          columns={[
-            { key: 'created_at', label: 'Date', render: (r) => fmtDate(r.created_at) },
-            { key: 'material', label: 'Material', render: (r) => cap(r.material) },
-            { key: 'qty', label: 'Qty', render: (r) => (r.unit === 'pcs' ? `${r.quantity} pcs` : `${parseFloat(r.quantity ?? r.weight_kg)} kg`) },
-            { key: 'points', label: 'Points', render: (r) => Number(r.points) },
-            { key: 'photo', label: 'Photo', render: (r) => (r.photo_url ? <img className="table-thumb" src={r.photo_url} alt="Recyclables" /> : '—') }
-          ]}
-          rows={dropRows.slice(0, 8)}
-          empty="No drop-offs yet. Bring your sorted recyclables to a hub."
-        />
-      </Card>
 
       <div className="rd-banner">
         <h3>Together for a Cleaner Community</h3>
