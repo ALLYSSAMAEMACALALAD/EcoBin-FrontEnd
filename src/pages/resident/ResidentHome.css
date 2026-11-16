@@ -123,7 +123,9 @@
 .rd-activity-text { color: var(--ink-soft); }
 .rd-activity-date { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
 
-.rd-eco-qr { display: grid; justify-items: center; gap: 12px; }
+.rd-eco-qr { display: grid; justify-items: center; gap: 18px; padding: 8px 4px 4px; }
+.rd-eco-qr-frame { background: #ffffff; padding: 18px; border-radius: 22px; border: 1px solid var(--line-strong); box-shadow: var(--shadow-soft); line-height: 0; }
+.rd-eco-qr-id { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: .06em; color: var(--green-bright); }
 .rd-eco-qr .qr { background: #ffffff; padding: 14px; border-radius: 18px; border: 1px solid var(--line-strong); box-shadow: var(--shadow-soft); }
 .rd-qr-svg { width: min(260px, 100%); height: auto; background: #ffffff; padding: 14px; border-radius: 18px; border: 1px solid var(--line-strong); box-shadow: var(--shadow-soft); }
 

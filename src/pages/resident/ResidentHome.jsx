@@ -397,11 +397,13 @@ function Overview({ onNavigate }) {
             <h3 className="rd-card-title">Your Eco-ID</h3>
           </div>
           <div className="rd-eco-qr">
-            <p className="muted" style={{ textAlign: 'center', margin: 0 }}>
+            <p className="muted" style={{ textAlign: 'center', margin: 0, maxWidth: 340 }}>
               Show this QR code at the drop-off hub so your points can be credited.
             </p>
-            <QRCodeSVG value={user.eco_id} size={160} includeMargin />
-            <p className="mono" style={{ margin: 0 }}>{user.eco_id}</p>
+            <div className="rd-eco-qr-frame">
+              <QRCodeSVG value={user.eco_id} size={240} includeMargin level="M" />
+            </div>
+            <p className="mono rd-eco-qr-id">{user.eco_id}</p>
           </div>
         </div>
       </div>
