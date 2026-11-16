@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
 import { Notice } from '../components/ui.jsx';
 import PasswordChecklist from '../components/PasswordChecklist.jsx';
 import { isPasswordStrong } from '../lib/password.js';
+import { NAUJAN_BARANGAYS, isNaujanBarangay } from '../lib/naujanBarangays.js';
 
 // Small line icons (no extra library needed)
 const PATHS = {
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></>,
   mail: <><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m3.5 7 8.5 6 8.5-6" /></>,
-  phone: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></>,
   pin: <><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>,
   lock: <><rect x="5" y="11" width="14" height="10" rx="2.5" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
   eye: <><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></>,
@@ -17,6 +17,20 @@ const PATHS = {
   login: <><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" /><path d="m10 17 5-5-5-5M15 12H3" /></>,
   plus: <path d="M12 5v14M5 12h14" />
 };
+
+// Bolds the first occurrence of the typed query inside a suggestion label.
+function matchPart(text, q) {
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q);
+  if (i === -1) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <strong>{text.slice(i, i + q.length)}</strong>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
 
 function FIcon({ n, size = 20 }) {
   return (
@@ -41,7 +55,7 @@ function FIcon({ n, size = 20 }) {
 // Without it, this is the normal full /register page.
 export default function Register({ onClose }) {
   const { register } = useAuth();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', barangay: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', barangay: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -49,9 +63,68 @@ export default function Register({ onClose }) {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  // Barangay autocomplete — suggestions only while typing
+  const barangayRef = useRef(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
+  const barangayQuery = form.barangay.trim().toLowerCase();
+  const barangayMatches = barangayQuery
+    ? NAUJAN_BARANGAYS
+        .filter((b) => b.toLowerCase().includes(barangayQuery))
+        .sort((a, b) => Number(b.toLowerCase().startsWith(barangayQuery)) - Number(a.toLowerCase().startsWith(barangayQuery)))
+        .slice(0, 8)
+    : [];
+
+  useEffect(() => {
+    if (!suggestOpen) return undefined;
+    const onDown = (e) => {
+      if (barangayRef.current && !barangayRef.current.contains(e.target)) setSuggestOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [suggestOpen]);
+
+  function pickBarangay(name) {
+    setForm({ ...form, barangay: name });
+    setSuggestOpen(false);
+    setHighlight(-1);
+  }
+
+  function onBarangayChange(e) {
+    setForm({ ...form, barangay: e.target.value });
+    setSuggestOpen(true);
+    setHighlight(-1);
+  }
+
+  function onBarangayKeyDown(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSuggestOpen(true);
+      setHighlight((h) => Math.min(h + 1, barangayMatches.length - 1));
+      return;
+    }
+    if (!suggestOpen || barangayMatches.length === 0) {
+      if (e.key === 'Escape') setSuggestOpen(false);
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter' && highlight >= 0) {
+      e.preventDefault();
+      pickBarangay(barangayMatches[highlight]);
+    } else if (e.key === 'Escape') {
+      setSuggestOpen(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError('');
+    if (!isNaujanBarangay(form.barangay)) {
+      setError('Please type a barangay in Naujan, Oriental Mindoro. Start typing to see suggestions.');
+      return;
+    }
     if (!isPasswordStrong(form.password)) {
       setError('Password must be at least 8 characters and include an uppercase letter, a lowercase letter and a special character.');
       return;
@@ -97,13 +170,39 @@ export default function Register({ onClose }) {
           <span className="rg-field-icon" aria-hidden="true"><FIcon n="mail" /></span>
           <input type="email" placeholder="Email" aria-label="Email" value={form.email} onChange={set('email')} required autoComplete="email" />
         </div>
-        <div className="rg-field">
-          <span className="rg-field-icon" aria-hidden="true"><FIcon n="phone" /></span>
-          <input type="tel" placeholder="Mobile number (for SMS reminders)" aria-label="Mobile number" value={form.phone} onChange={set('phone')} autoComplete="tel" />
-        </div>
-        <div className="rg-field">
+        <div className="rg-field rg-field-suggest" ref={barangayRef}>
           <span className="rg-field-icon" aria-hidden="true"><FIcon n="pin" /></span>
-          <input type="text" placeholder="Barangay / zone" aria-label="Barangay or zone" value={form.barangay} onChange={set('barangay')} required />
+          <input
+            type="text"
+            role="combobox"
+            aria-expanded={suggestOpen && barangayMatches.length > 0}
+            aria-controls="naujan-barangay-list"
+            aria-autocomplete="list"
+            placeholder="Barangay / zone (e.g. Del Pilar)"
+            aria-label="Barangay or zone"
+            value={form.barangay}
+            onChange={onBarangayChange}
+            onFocus={() => setSuggestOpen(true)}
+            onKeyDown={onBarangayKeyDown}
+            autoComplete="off"
+            required
+          />
+          {suggestOpen && barangayMatches.length > 0 && (
+            <ul className="rg-suggest" id="naujan-barangay-list" role="listbox" aria-label="Barangay suggestions">
+              {barangayMatches.map((b, i) => (
+                <li key={b} role="option" aria-selected={i === highlight}>
+                  <button
+                    type="button"
+                    className={i === highlight ? 'active' : ''}
+                    onMouseEnter={() => setHighlight(i)}
+                    onMouseDown={(e) => { e.preventDefault(); pickBarangay(b); }}
+                  >
+                    {matchPart(b, barangayQuery)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="rg-field">
           <span className="rg-field-icon" aria-hidden="true"><FIcon n="lock" /></span>

@@ -628,3 +628,23 @@ body.light .btn.lime { color: #fff !important; }
   .fp-mascot, .lg-mascot, .rg-mascot { font-size: 76px; margin-top: 14px; }
   .fp-banner, .lg-banner, .rg-banner { font-size: .84rem; }
 }
+
+/* ========= Barangay autocomplete ========= */
+.rg-field-suggest { position: relative; }
+.rg-suggest {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 70;
+  margin: 0; padding: 6px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 14px; box-shadow: var(--shadow);
+  max-height: 238px; overflow-y: auto;
+  animation: modal-pop .18s ease;
+}
+.rg-suggest li { margin: 0; padding: 0; }
+.rg-suggest button {
+  width: 100%; text-align: left; background: transparent; border: 0;
+  border-radius: 9px; padding: 9px 12px; font: inherit; font-size: .93rem;
+  color: var(--ink-soft); cursor: pointer; display: block;
+}
+.rg-suggest button:hover, .rg-suggest button.active { background: var(--green-soft); color: var(--green-bright); }
+.rg-suggest strong { color: var(--green-bright); font-weight: 800; }
+
