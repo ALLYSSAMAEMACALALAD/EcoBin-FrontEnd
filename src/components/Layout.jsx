@@ -1,17 +1,14 @@
-import { Link, useNavigate } from 'react-router-dom';
 import useTheme from '../lib/theme.jsx';
-import { useAuth, ROLE_HOME } from '../lib/auth.jsx';
-import { LeafIcon } from './icons.jsx';
 
-const ROLE_LABEL = { resident: 'Resident', collector: 'Collector / Driver', admin: 'Admin' };
-
+/**
+ * Authenticated role-page wrapper. The role shells (RoleShell) render their own
+ * topbar with search, bell and user cluster — this wrapper only adds the
+ * floating dark/light theme toggle so it shows on resident/collector/admin pages only.
+ */
 export default function Layout({ children }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [theme, toggleTheme] = useTheme();
-  const onLogout = async () => { await logout(); navigate('/login'); };
   return (
-    <div className="app">
+    <>
       <button
         type="button"
         className="theme-toggle-float"
@@ -22,18 +19,7 @@ export default function Layout({ children }) {
         <span aria-hidden="true">{theme === 'light' ? '🌙' : '☀️'}</span>
         <span className="hide-sm">{theme === 'light' ? 'Dark' : 'Light'}</span>
       </button>
-      <header className="topbar">
-        <Link to={ROLE_HOME[user.role]} className="brand">
-          <LeafIcon size={22} className="brand-mark" />
-          <span className="brand-name">EcoBin</span>
-        </Link>
-        <div className="who">
-          <span className={`badge role-${user.role}`}>{ROLE_LABEL[user.role]}</span>
-          <span className="muted hide-sm">{user.name}</span>
-          <button className="signout" onClick={onLogout}>Sign out</button>
-        </div>
-      </header>
-      <main className="content">{children}</main>
-    </div>
+      {children}
+    </>
   );
 }

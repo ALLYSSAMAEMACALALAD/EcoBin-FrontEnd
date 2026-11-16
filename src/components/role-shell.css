@@ -7,8 +7,9 @@
 .rs-shell {
   position: relative;
   display: grid; grid-template-columns: 260px minmax(0, 1fr);
-  width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--green-950); color: var(--ink);
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   box-sizing: border-box;

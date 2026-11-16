@@ -138,7 +138,7 @@ body.light .theme-toggle-float { background: rgba(255, 255, 255, .8); }
 .signout:hover { background: var(--green-soft); border-color: var(--green); }
 
 .content { flex: 1; padding: 0 0 56px; }
-.content > :not(.hero) { width: min(1120px, calc(100% - 32px)); margin-left: auto; margin-right: auto; }
+.content > :not(.hero):not(.rs-shell) { width: min(1120px, calc(100% - 32px)); margin-left: auto; margin-right: auto; }
 .content > .hero + * { margin-top: 36px; }
 
 /* ========= Grids and stacks ========= */
@@ -362,7 +362,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 @media (max-width: 480px) {
   .card { padding: 18px; }
   .big { font-size: 2.1rem; }
-  .content > :not(.hero) { width: min(1120px, calc(100% - 20px)); }
+  .content > :not(.hero):not(.rs-shell) { width: min(1120px, calc(100% - 20px)); }
   h1 { font-size: 1.35rem; }
   .topbar .brand-name { font-size: 1.1rem; }
   .brand-tile { width: 38px; height: 38px; font-size: 1.15rem; border-radius: 11px; }
@@ -377,7 +377,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 @media (max-width: 380px) {
   .fp-mascot, .lg-mascot, .rg-mascot { font-size: 62px; margin-top: 18px; }
   .hero h1 { font-size: 1.7rem !important; }
-  .content > :not(.hero) { width: 100%; padding-left: 8px; padding-right: 8px; box-sizing: border-box; }
+  .content > :not(.hero):not(.rs-shell) { width: 100%; padding-left: 8px; padding-right: 8px; box-sizing: border-box; }
 }
 
 /* ========= Password checklist ========= */
