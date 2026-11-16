@@ -1,4 +1,4 @@
-/* EcoBin design system — deep forest green canvas, mint accent, soft raised surfaces.
+/* EcoBin design system - deep forest green canvas, mint accent, soft raised surfaces.
    Theme is switchable via body.light (toggle in the topbar). */
 :root {
   --green-950: #07130d;
@@ -339,8 +339,8 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .fp-footer, .lg-footer, .rg-footer { margin: 16px 0 0; text-align: center; font-size: .92rem; color: var(--muted); }
 .fp-link, .lg-link, .rg-link { color: var(--green-bright); font-weight: 700; text-decoration: none; }
 .fp-link:hover, .lg-link:hover, .rg-link:hover { color: var(--link-hover); text-decoration: underline; }
-.fp-link-btn { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--green-bright); cursor: pointer; }
-.fp-link-btn:hover { text-decoration: underline; }
+.fp-link-btn, .lg-link-btn, .rg-link-btn { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--green-bright); cursor: pointer; text-decoration: none; }
+.fp-link-btn:hover, .lg-link-btn:hover, .rg-link-btn:hover { color: var(--link-hover); text-decoration: underline; }
 .fp-forgot, .lg-forgot { margin: -2px 2px 2px; text-align: right; font-size: .9rem; }
 .fp-forgot .fp-link, .lg-forgot .lg-link { font-weight: 600; }
 
@@ -488,8 +488,65 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .dp-summary { grid-template-columns: 1fr; }
 }
 
+/* ========= Modals (sign-up popup & success dialog) ========= */
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-pop { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px; overflow-y: auto;
+  background: rgba(4, 12, 8, .6);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  animation: modal-fade .18s ease;
+}
+body.light .modal-backdrop { background: rgba(23, 49, 31, .35); }
+.modal {
+  width: min(440px, 100%); max-height: 92vh; overflow-y: auto;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 30px 28px 26px; text-align: center;
+  animation: modal-pop .24s ease;
+}
+.modal h2 { font-size: 1.35rem; margin: 14px 0 6px; }
+.modal .muted { margin: 0; line-height: 1.55; }
+.modal-icon {
+  width: 66px; height: 66px; margin: 0 auto; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--green-soft); border: 1px solid rgba(61,220,132,.35);
+  color: var(--green-bright);
+}
+body.light .modal-icon { color: var(--green-strong); }
+.modal-id {
+  margin: 16px auto 4px; padding: 12px 16px; min-width: min(240px, 100%);
+  border: 1px dashed rgba(155,229,181,.35); border-radius: 14px;
+  background: var(--surface-2); display: grid; gap: 4px; justify-items: center;
+}
+body.light .modal-id { border-color: rgba(23,110,58,.4); }
+.modal-id span { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.modal-id strong { font-size: 1.15rem; color: var(--green-bright); letter-spacing: .04em; }
+.modal-note { font-size: .82rem; margin: 10px 0 18px; }
+.modal .btn.primary { width: 100%; }
+
+/* Register popup mode (opened from the login page) */
+.rg-modal {
+  position: relative; width: min(480px, 100%); max-height: 90vh; overflow-y: auto;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); animation: modal-pop .24s ease;
+}
+.rg-modal .rg-right { padding: 28px 28px 24px; }
+.rg-modal-x {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  width: 32px; height: 32px; display: grid; place-items: center; padding: 0;
+  border: 0; border-radius: 50%; background: transparent;
+  color: var(--muted); cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.rg-modal-x:hover { background: var(--surface-3); color: var(--ink); }
+
 /* ==========================================
-   LIGHT THEME � toggled via body.light on <html>
+   LIGHT THEME - toggled via body.light on <html>
    ========================================== */
 body.light {
   --green-950: #f4f8ec;
@@ -570,11 +627,4 @@ body.light .btn.lime { color: #fff !important; }
   .fp-left, .lg-left, .rg-left { padding: 22px 14px 20px !important; min-height: auto; }
   .fp-mascot, .lg-mascot, .rg-mascot { font-size: 76px; margin-top: 14px; }
   .fp-banner, .lg-banner, .rg-banner { font-size: .84rem; }
-}
-@media (max-width: 360px) {
-  .fp-page, .lg-page, .rg-page { padding: 10px 8px; }
-  .fp-left, .lg-left, .rg-left { padding: 22px 14px 20px !important; min-height: auto; }
-  .fp-mascot, .lg-mascot, .rg-mascot { font-size: 76px; margin-top: 14px; }
-  .fp-banner, .lg-banner, .rg-banner { font-size: .84rem; }
-
 }

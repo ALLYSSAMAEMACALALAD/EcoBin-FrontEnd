@@ -5,6 +5,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { api, newIdempotencyKey } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
+import RoleShell from '../../components/RoleShell.jsx';
+import { parseDate } from '../../components/NotificationBell.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
 import { compressImage } from '../../lib/image.js';
 import './CollectorHome.css';
@@ -50,12 +52,12 @@ const STEP_INDEX = { identify: 0, details: 1, review: 2, done: 3 };
 const EMPTY_FORM = { material: 'plastic', quantity: '', hub_id: '' };
 
 const NAV_ITEMS = [
-  ['overview', '🏠', 'Collector Dashboard'],
-  ['route', '📅', 'My Route'],
-  ['dropoff', '♻️', 'Log Drop-off'],
-  ['history', '🕘', 'Drop-off History'],
-  ['tickets', '⚠️', 'Dumping Reports'],
-  ['analytics', '📊', 'Analytics'],
+  ['overview', 'dashboard', 'Collector Dashboard', 'home overview'],
+  ['route', 'truck', 'My Route', 'route dispatch collection schedule'],
+  ['dropoff', 'recycle', 'Log Drop-off', 'dropoff log waste credit'],
+  ['history', 'clock', 'Drop-off History', 'history dropoff records'],
+  ['tickets', 'report', 'Dumping Reports', 'dumping illegal report tickets'],
+  ['analytics', 'chart', 'Analytics', 'analytics charts stats performance'],
 ];
 
 const todayISO = () => new Date().toLocaleDateString('en-CA');
@@ -71,97 +73,88 @@ const extractEcoId = (raw) => {
 };
 
 export default function CollectorHome() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [tab, setTab] = useState('overview');
-  const [navOpen, setNavOpen] = useState(false);
+
   const firstName = (user?.name || '').split(' ')[0] || 'Collector';
-  const initial = firstName.charAt(0).toUpperCase();
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-  const weekday = now.toLocaleDateString('en-PH', { weekday: 'long' });
+  const hero = {
+    title: `Hello, ${firstName}! 🌱`,
+    sub: "Let's keep our community clean and green today!",
+  };
 
-  // Close the mobile drawer on Escape and prevent body scroll while it is open.
-  useEffect(() => {
-    if (!navOpen) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false); };
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
-  }, [navOpen]);
+  // Bell: today's route, recent drop-offs logged, and open illegal-dumping tickets.
+  const buildNotifs = ({ drops, reports, routes }) => {
+    const items = [];
+    const today = new Date().toLocaleDateString('en-CA');
 
-  const navTo = (key) => { setTab(key); setNavOpen(false); };
+    routes
+      .filter((r) => r.route_date === today && r.status !== 'completed')
+      .slice(0, 3)
+      .forEach((r) => {
+        items.push({
+          id: `rt${r.id}-${today}`,
+          icon: 'truck',
+          kind: 'pickup',
+          title: 'Route scheduled today',
+          text: r.name || 'Collection route',
+          when: new Date(),
+          go: 'route',
+        });
+      });
+
+    drops.slice(0, 3).forEach((d) => {
+      const when = parseDate(d.created_at);
+      if (!when) return;
+      items.push({
+        id: `d${d.id ?? d.created_at}`,
+        icon: 'leaf',
+        kind: 'points',
+        title: `+${d.points} EcoPoints credited`,
+        text: `${d.resident_name ?? 'Resident'} · ${d.unit === 'pcs' ? `${d.quantity} pcs` : `${parseFloat(d.weight_kg)} kg`}${d.material ? ` · ${cap(d.material)}` : ''}`,
+        when,
+        go: 'history',
+      });
+    });
+
+    reports
+      .filter((r) => r.status !== 'resolved' && r.status !== 'rejected')
+      .slice(0, 5)
+      .forEach((r) => {
+        const when = parseDate(r.updated_at || r.created_at);
+        if (!when) return;
+        items.push({
+          id: `r${r.id ?? r.ticket_no}-${r.status}`,
+          icon: 'report',
+          kind: 'report',
+          title: `Report ${r.ticket_no || ''} is ${cap(r.status)}`.replace('  ', ' '),
+          text: r.location || 'Illegal dumping report',
+          when,
+          go: 'tickets',
+        });
+      });
+
+    return items.sort((a, b) => b.when - a.when).slice(0, 8);
+  };
 
   return (
-    <div className="cd-shell">
-      <aside className={`cd-sidebar${navOpen ? ' open' : ''}`}>
-        <div className="cd-brand">
-          <div className="cd-brand-tile">♻️</div>
-          <div className="cd-brand-name">Eco<span>Bin</span></div>
-        </div>
-
-        <div className="cd-user">
-          <div className="cd-user-avatar">{initial}</div>
-          <div>
-            <div className="cd-user-name">{user?.name || 'Collector'}</div>
-            <div className="cd-user-role">Collector</div>
-          </div>
-        </div>
-
-        <nav className="cd-nav">
-          {NAV_ITEMS.map(([key, icon, label]) => (
-            <button
-              key={key}
-              type="button"
-              className={tab === key ? 'active' : ''}
-              onClick={() => navTo(key)}
-            >
-              <span className="cd-nav-icon">{icon}</span>
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <button type="button" className="cd-logout" onClick={() => logout?.()}>
-          <span className="cd-nav-icon">⎋</span>
-          Logout
-        </button>
-
-        <div className="cd-tagline">
-          Clean Community,<br />
-          Greener Tomorrow
-        </div>
-      </aside>
-
-      {navOpen && <div className="cd-overlay" onClick={() => setNavOpen(false)} aria-hidden="true" />}
-
-      <main className="cd-main">
-        <button type="button" className="cd-burger" onClick={() => setNavOpen(v => !v)} aria-expanded={navOpen} aria-controls="cd-drawer">
-          <span aria-hidden="true">☰</span> Menu
-        </button>
-        <header className="cd-topbar">
-          <div className="cd-bell" aria-label="Notifications">
-            🔔
-            <span className="cd-bell-dot" />
-          </div>
-          <div className="cd-date">
-            <strong>{dateStr}</strong>
-            <span>{weekday}</span>
-          </div>
-        </header>
-
-        <section className="cd-hero">
-          <h1>Hello, {firstName}! 🌱</h1>
-          <p>Let's keep our community clean and green today!</p>
-        </section>
-
-        {tab === 'overview' && <Overview onNavigate={setTab} />}
-        {tab === 'route' && <RoutePage />}
-        {tab === 'dropoff' && <LogDropoff />}
-        {tab === 'history' && <History />}
-        {tab === 'tickets' && <Tickets />}
-        {tab === 'analytics' && <Analytics />}
-      </main>
-    </div>
+    <RoleShell
+      navItems={NAV_ITEMS}
+      tab={tab}
+      onTab={setTab}
+      role="collector"
+      roleLabel="Collector / Driver"
+      hero={hero}
+      searchPlaceholder="Search pages… (e.g. route, drop-off, tickets)"
+      notifSources={{ drops: true, reports: true, routes: true }}
+      buildNotifs={buildNotifs}
+    >
+      {tab === 'overview' && <Overview onNavigate={setTab} />}
+      {tab === 'route' && <RoutePage />}
+      {tab === 'dropoff' && <LogDropoff />}
+      {tab === 'history' && <History />}
+      {tab === 'tickets' && <Tickets />}
+      {tab === 'analytics' && <Analytics />}
+    </RoleShell>
   );
 }
 

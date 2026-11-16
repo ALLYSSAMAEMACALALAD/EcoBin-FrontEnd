@@ -20,7 +20,7 @@ export default function Layout({ children }) {
         title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       >
         <span aria-hidden="true">{theme === 'light' ? '🌙' : '☀️'}</span>
-        <span className="theme-toggle-float-label hide-sm">{theme === 'light' ? 'Dark' : 'Light'}</span>
+        <span className="hide-sm">{theme === 'light' ? 'Dark' : 'Light'}</span>
       </button>
       <header className="topbar">
         <Link to={ROLE_HOME[user.role]} className="brand">

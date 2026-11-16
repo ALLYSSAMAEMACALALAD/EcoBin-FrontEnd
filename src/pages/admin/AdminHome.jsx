@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -7,128 +7,128 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../lib/auth.jsx';
+import RoleShell from '../../components/RoleShell.jsx';
+import Ico from '../../components/Ico.jsx';
+import { parseDate } from '../../components/NotificationBell.jsx';
 import { Card, Notice, Table, useLoader, fmtDate, cap } from '../../components/ui.jsx';
 import { compressImage } from '../../lib/image.js';
 import './AdminHome.css';
 
 const NAV_ITEMS = [
-  ['dashboard', '🏠', 'Dashboard'],
-  ['users', '👥', 'Users & Staff'],
-  ['schedules', '📅', 'Collection Schedules'],
-  ['routes', '🚚', 'Routes & Dispatch'],
-  ['inventory', '🎁', 'Rewards Management'],
-  ['redemptions', '🎟️', 'Redemptions'],
-  ['tickets', '⚠️', 'Dumping Tickets'],
-  ['reports', '📊', 'Reports & Analytics'],
-  ['hubs', '📍', 'Pickup Hubs'],
+  ['dashboard', 'dashboard', 'Dashboard', 'home overview'],
+  ['users', 'users', 'Users & Staff', 'users staff accounts manage'],
+  ['schedules', 'calendar', 'Collection Schedules', 'calendar schedule collection'],
+  ['routes', 'truck', 'Routes & Dispatch', 'routes dispatch collection vehicle'],
+  ['inventory', 'gift', 'Rewards Management', 'rewards inventory gifts catalog'],
+  ['redemptions', 'ticket', 'Redemptions', 'redemptions redeem pending approve'],
+  ['tickets', 'report', 'Dumping Tickets', 'dumping illegal report tickets'],
+  ['reports', 'chart', 'Reports & Analytics', 'reports analytics export charts'],
+  ['hubs', 'pin', 'Pickup Hubs', 'hubs pickup points locations'],
 ];
 
 const PAGE_TITLES = Object.fromEntries(NAV_ITEMS.map(([k, , label]) => [k, label]));
 
 // [key, icon, label, tone]
 const QUICK_ACTIONS = [
-  ['users', '👥', 'Manage Users', 'tone-green'],
-  ['reports', '📊', 'View Reports', 'tone-blue'],
-  ['inventory', '🎁', 'Update Rewards', 'tone-amber'],
-  ['schedules', '📅', 'View Schedules', 'tone-blue'],
-  ['tickets', '⚠️', 'Check Tickets', 'tone-orange'],
-  ['routes', '🚚', 'Dispatch Routes', 'tone-green'],
+  ['users', 'users', 'Manage Users', 'tone-green'],
+  ['reports', 'chart', 'View Reports', 'tone-blue'],
+  ['inventory', 'gift', 'Update Rewards', 'tone-amber'],
+  ['schedules', 'calendar', 'View Schedules', 'tone-blue'],
+  ['tickets', 'report', 'Check Tickets', 'tone-orange'],
+  ['routes', 'truck', 'Dispatch Routes', 'tone-green'],
 ];
 
 export default function AdminHome() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [tab, setTab] = useState('dashboard');
-  const [navOpen, setNavOpen] = useState(false);
 
   const firstName = (user?.name || '').split(' ')[0] || 'Admin';
-  const initial = firstName.charAt(0).toUpperCase();
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-  const weekday = now.toLocaleDateString('en-PH', { weekday: 'long' });
 
-  // Close the mobile drawer on Escape and prevent body scroll while it is open.
-  useEffect(() => {
-    if (!navOpen) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') setNavOpen(false); };
-    document.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
-  }, [navOpen]);
+  // Bell: redemption approvals awaiting review, open dumping tickets,
+  // and recent drop-offs logged across the community.
+  const buildNotifs = ({ drops, reports, redemptions }) => {
+    const items = [];
 
-  const navTo = (key) => { setTab(key); setNavOpen(false); };
+    redemptions
+      .filter((r) => r.status === 'pending')
+      .slice(0, 5)
+      .forEach((r) => {
+        const when = parseDate(r.created_at);
+        if (!when) return;
+        items.push({
+          id: `red${r.id}-pending`,
+          icon: 'doc',
+          kind: 'redemption',
+          title: 'Redemption awaiting approval',
+          text: `${r.resident_name ?? 'Resident'} · ${r.reward_name ?? 'Reward'} · ${r.points_cost ?? r.points_redeemed ?? ''} pts`,
+          when,
+          go: 'redemptions',
+        });
+      });
+
+    reports
+      .filter((r) => r.status !== 'resolved' && r.status !== 'rejected')
+      .slice(0, 5)
+      .forEach((r) => {
+        const when = parseDate(r.updated_at || r.created_at);
+        if (!when) return;
+        items.push({
+          id: `r${r.id ?? r.ticket_no}-${r.status}`,
+          icon: 'report',
+          kind: 'report',
+          title: `Report ${r.ticket_no || ''} is ${cap(r.status)}`.replace('  ', ' '),
+          text: r.location || 'Illegal dumping report',
+          when,
+          go: 'tickets',
+        });
+      });
+
+    drops.slice(0, 3).forEach((d) => {
+      const when = parseDate(d.created_at);
+      if (!when) return;
+      items.push({
+        id: `d${d.id ?? d.created_at}`,
+        icon: 'leaf',
+        kind: 'points',
+        title: `+${d.points} EcoPoints credited`,
+        text: `${d.resident_name ?? 'Resident'} · ${d.unit === 'pcs' ? `${d.quantity} pcs` : `${parseFloat(d.weight_kg)} kg`}${d.material ? ` · ${cap(d.material)}` : ''}`,
+        when,
+        go: 'dashboard',
+      });
+    });
+
+    return items.sort((a, b) => b.when - a.when).slice(0, 8);
+  };
 
   return (
-    <div className="ad-shell">
-      <aside className={`ad-sidebar${navOpen ? ' open' : ''}`}>
-        <div className="ad-brand">
-          <div className="ad-brand-tile">♻️</div>
-          <div className="ad-brand-name">Eco<span>Bin</span></div>
-          <div className="ad-brand-tag">Recycle. Earn. Keep it Green.</div>
-        </div>
+    <RoleShell
+      navItems={NAV_ITEMS}
+      tab={tab}
+      onTab={setTab}
+      role="admin"
+      roleLabel="Administrator"
+      searchPlaceholder="Search pages… (e.g. redemptions, routes, users)"
+      notifSources={{ drops: true, reports: true, redemptions: true }}
+      buildNotifs={buildNotifs}
+    >
+      <div className="ad-page-body">
+        {tab === 'dashboard' && <Dashboard firstName={firstName} onNavigate={setTab} />}
 
-        <nav className="ad-nav">
-          {NAV_ITEMS.map(([key, icon, label]) => (
-            <button
-              key={key}
-              type="button"
-              className={tab === key ? 'active' : ''}
-              onClick={() => navTo(key)}
-            >
-              <span className="ad-nav-icon">{icon}</span>
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <button type="button" className="ad-logout" onClick={() => logout?.()}>
-          <span className="ad-nav-icon">⎋</span>
-          Logout
-        </button>
-      </aside>
-
-      {navOpen && <div className="ad-overlay" onClick={() => setNavOpen(false)} aria-hidden="true" />}
-
-      <main className="ad-main">
-        <button type="button" className="ad-burger" onClick={() => setNavOpen(v => !v)} aria-expanded={navOpen} aria-controls="ad-drawer">
-          <span aria-hidden="true">☰</span> Menu
-        </button>
-        <header className="ad-topbar" style={{ justifyContent: 'flex-end' }}>
-          <div className="ad-bell" aria-label="Notifications">
-            🔔
-            <span className="ad-bell-dot" />
-          </div>
-          <div className="ad-date">
-            <strong>{dateLabel}</strong>
-            <span>{weekday}</span>
-          </div>
-          <div className="ad-user">
-            <div className="ad-avatar">{initial}</div>
-            <div>
-              <div className="ad-user-name">{user?.name || 'Admin'}</div>
-              <div className="ad-user-role">{cap(user?.role || 'admin')}</div>
-            </div>
-          </div>
-        </header>
-
-        <div className="ad-page-body">
-          {tab === 'dashboard' && <Dashboard firstName={firstName} onNavigate={setTab} />}
-
-          {tab !== 'dashboard' && (
-            <>
-              <h1 className="ad-page-title">{PAGE_TITLES[tab]}</h1>
-              {tab === 'users' && <Users />}
-              {tab === 'schedules' && <Schedules />}
-              {tab === 'routes' && <Routes />}
-              {tab === 'redemptions' && <Redemptions />}
-              {tab === 'tickets' && <Tickets />}
-              {tab === 'inventory' && <RewardsInventory />}
-              {tab === 'reports' && <ReportsHub />}
-              {tab === 'hubs' && <Hubs />}
-            </>
-          )}
-        </div>
-      </main>
-    </div>
+        {tab !== 'dashboard' && (
+          <>
+            <h1 className="ad-page-title">{PAGE_TITLES[tab]}</h1>
+            {tab === 'users' && <Users />}
+            {tab === 'schedules' && <Schedules />}
+            {tab === 'routes' && <Routes />}
+            {tab === 'redemptions' && <Redemptions />}
+            {tab === 'tickets' && <Tickets />}
+            {tab === 'inventory' && <RewardsInventory />}
+            {tab === 'reports' && <ReportsHub />}
+            {tab === 'hubs' && <Hubs />}
+          </>
+        )}
+      </div>
+    </RoleShell>
   );
 }
 
@@ -199,7 +199,7 @@ function Dashboard({ firstName, onNavigate }) {
           <div className="ad-quick">
             {QUICK_ACTIONS.map(([key, icon, label, tone]) => (
               <button key={key} type="button" className={`ad-quick-btn ${tone}`} onClick={() => onNavigate(key)}>
-                <span aria-hidden="true">{icon}</span>
+                <Ico n={icon} size={22} />
                 {label}
               </button>
             ))}
