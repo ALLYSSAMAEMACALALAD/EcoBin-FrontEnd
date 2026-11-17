@@ -288,3 +288,7 @@
   .ad-stats { grid-template-columns: 1fr; }
   .ad-banner { padding: 20px 18px; }
 }
+
+/* Row of action buttons in tables — keep on one line */
+.ad-actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
+

@@ -17,10 +17,13 @@
 .rs-shell * , .rs-shell *::before, .rs-shell *::after { box-sizing: border-box; }
 
 /* ---------- Sidebar ---------- */
+/* Sidebar stretches to the full height of the page (grid columns equal-height).
+   Logout sits at the very bottom via margin-top: auto — scrolling to the end
+   of the page reveals it. No sticky/fixed positioning. */
 .rs-sidebar {
-  position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
   display: flex; flex-direction: column; gap: 6px;
   padding: 28px 16px 22px;
+  min-height: 100vh; min-height: 100dvh;
   color: #fff;
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-opacity='0.09' stroke-width='0.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20c-4 0-7-3-7-8 0-4 4-8 13-8 0 9-4 16-11 16Z'/%3E%3Cpath d='M4 20c6 0 10-4 12-9'/%3E%3C/svg%3E") no-repeat 150% 118% / 260px,

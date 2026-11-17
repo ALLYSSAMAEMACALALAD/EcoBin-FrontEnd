@@ -838,7 +838,7 @@ function Users() {
               key: 'act',
               label: '',
               render: (r) => (
-                <span className="row">
+                <span className="ad-actions">
                   <button className="btn small" onClick={() => { setPwTarget(null); startEdit(r); }}>Edit</button>
                   <button className="btn small ghost" onClick={() => { setEditing(null); setPwTarget(r); setNewPw(''); }}>Password</button>
                   <button className="btn small ghost" onClick={() => toggleStatus(r)}>
