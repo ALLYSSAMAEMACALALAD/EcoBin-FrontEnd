@@ -78,9 +78,9 @@
 .rd-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .rd-card-title { margin: 0; font-size: 16px; font-weight: 800; color: var(--ink); }
 
-.rd-stat-label { color: var(--muted); font-size: 13px; font-weight: 600; letter-spacing: .02em; }
-.rd-stat-value { font-size: 34px; font-weight: 800; color: var(--ink); margin-top: 8px; line-height: 1; letter-spacing: -.025em; }
-.rd-stat-sub { color: var(--ink-soft); font-size: 13.5px; margin-top: 8px; }
+.rd-stat-label { color: var(--muted); font-size: 13.5px; font-weight: 600; letter-spacing: .02em; }
+.rd-stat-value { font-size: 38px; font-weight: 800; color: var(--ink); margin-top: 10px; line-height: 1; letter-spacing: -.025em; }
+.rd-stat-sub { color: var(--ink-soft); font-size: 14px; margin-top: 10px; }
 .rd-glow { box-shadow: var(--shadow-soft), 0 0 40px rgba(61,220,132,.08); }
 
 .rd-progress { height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin-top: 14px; }
@@ -959,12 +959,15 @@
 }
 .rd-tip strong { color: var(--green-bright); }
 
-.rd-stat-card { position: relative; padding-right: 72px; overflow: hidden; }
+.rs-shell .rd-stat-card { position: relative; padding: 26px 28px; padding-right: 76px; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; }
+.rd-stat-card .rd-stat-btn { margin-top: auto; align-self: flex-start; padding: 5px 14px; font-size: .72rem; font-weight: 800; letter-spacing: .01em; line-height: 1.25; box-shadow: none; border-radius: 999px; }
+.btn.primary.rd-stat-btn { box-shadow: none; }
+.rd-stat-card .rd-stat-btn:hover { transform: translateY(-1px); }
 .rd-stat-icon {
-  position: absolute; top: 18px; right: 18px;
-  width: 48px; height: 48px; border-radius: 14px;
+  position: absolute; top: 16px; right: 16px;
+  width: 54px; height: 54px; border-radius: 16px;
   display: grid; place-items: center;
-  background: var(--green-soft); color: var(--green-bright);
+  background: var(--green-soft); color: var(--green-bright); font-size: 24px;
 }
 .rd-stat-icon.truck { background: var(--tone-blue-bg); color: var(--tone-blue); }
 

@@ -32,10 +32,8 @@ const rewardCatalog = [
   { name: 'Reusable Tumbler', points_cost: 200, stock: 15 },
   { name: 'Eco Cleaning Kit', points_cost: 200, stock: 10 },
   { name: 'Gardening Starter Kit', points_cost: 250, stock: 10 },
-  { name: 'Grocery Discount Voucher', points_cost: 300, stock: 20 },
   { name: 'School Supplies Bundle', points_cost: 350, stock: 10 },
   { name: 'Grocery Gift Pack', points_cost: 500, stock: 10 },
-  { name: 'Transportation Fare Voucher', points_cost: 500, stock: 10 },
   { name: 'Eco-Friendly Household Kit', points_cost: 750, stock: 5 }
 ];
 
@@ -269,9 +267,8 @@ function Overview({ onNavigate }) {
           </div>
           {balance.error && <Notice kind="error">{balance.error}</Notice>}
           <button
-            className="btn primary"
+            className="btn primary rd-stat-btn"
             type="button"
-            style={{ marginTop: 14 }}
             onClick={() => onNavigate('rewards')}
           >
             View Rewards →
@@ -285,7 +282,7 @@ function Overview({ onNavigate }) {
             <div className="rd-stat-sub">Loading…</div>
           ) : nextPickup ? (
             <>
-              <div className="rd-stat-value" style={{ fontSize: 26 }}>
+              <div className="rd-stat-value" style={{ fontSize: 28 }}>
                 {formatLongDate(nextPickup.route_date)}
               </div>
               <div className="rd-stat-sub">{nextPickup.name}</div>
@@ -294,9 +291,8 @@ function Overview({ onNavigate }) {
             <div className="rd-stat-sub">No pickup scheduled.</div>
           )}
           <button
-            className="btn ghost"
+            className="btn ghost rd-stat-btn"
             type="button"
-            style={{ marginTop: 14 }}
             onClick={() => onNavigate('schedule')}
           >
             View Schedule →

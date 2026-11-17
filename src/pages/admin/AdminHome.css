@@ -292,3 +292,17 @@
 /* Row of action buttons in tables — keep on one line */
 .ad-actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
 
+/* ========= Redemption filter bar ========= */
+.ad-filterbar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin: 4px 0 14px; }
+.ad-filterbar label { display: grid; gap: 6px; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ad-filterbar select {
+  height: 40px; padding: 0 36px 0 14px;
+  border: 1px solid var(--line); border-radius: 12px;
+  font: inherit; font-size: .92rem; color: var(--ink);
+  background: var(--surface-2); cursor: pointer; outline: 0;
+}
+.ad-filterbar select:focus { border-color: var(--green-strong); box-shadow: 0 0 0 3px var(--green-soft); }
+.ad-filterbar-count { margin-left: auto; font-size: 13px; color: var(--muted); padding-bottom: 4px; }
+.ad-filterbar-count strong { color: var(--ink); }
+.ad-filterbar-clear { background: none; border: 0; color: var(--green-bright); font-weight: 800; font-size: .85rem; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+.ad-filterbar-clear:hover { background: var(--green-soft); }

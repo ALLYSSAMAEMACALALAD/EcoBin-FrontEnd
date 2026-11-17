@@ -494,7 +494,7 @@ function Schedules() {
               key: 'act',
               label: '',
               render: (r) => (
-                <span className="row">
+                <span className="ad-actions">
                   <button
                     className="btn small"
                     onClick={() => {
@@ -575,23 +575,37 @@ function Routes() {
         </form>
       </Card>
       <Card title="Routes & live truck status">
-        {(routes.data?.routes || []).map((r) => (
-          <div key={r.id} className="route-item">
-            <div className="route-head">
-              <strong>{r.name}</strong> <span className="muted">{r.route_date}</span>
-              <span className={`badge s-${r.status}`}>{cap(r.status)}</span>
+        <div className="routes-list">
+          {(routes.data?.routes || []).map((r) => (
+            <div key={r.id} className="route-card">
+              <div className="route-card-head">
+                <div>
+                  <div className="route-card-name">{r.name}</div>
+                  <div className="route-card-date">{new Date(`${r.route_date}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                </div>
+                <span className={`badge s-${r.status}`}>{cap(r.status)}</span>
+              </div>
+
+              <label className="route-assign">
+                <span>Collector</span>
+                <select defaultValue={r.collector_id ?? ''} onChange={(e) => e.target.value && assign(r.id, e.target.value)}>
+                  <option value="">Unassigned</option>
+                  {(users.data?.users || []).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </label>
+
+              <div className="route-meta">
+                <span className="route-stops">{r.stops.filter((s) => s.status === 'completed').length}/{r.stops.length} stops</span>
+                {r.truck_lat && (
+                  <a className="route-map" href={`https://www.google.com/maps?q=${r.truck_lat},${r.truck_lng}`} target="_blank" rel="noreferrer">
+                    📍 Truck on map →
+                  </a>
+                )}
+              </div>
             </div>
-            <div className="row">
-              <select defaultValue={r.collector_id ?? ''} onChange={(e) => e.target.value && assign(r.id, e.target.value)}>
-                <option value="">Unassigned</option>
-                {(users.data?.users || []).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-              <span className="muted">{r.stops.filter((s) => s.status === 'completed').length}/{r.stops.length} stops</span>
-              {r.truck_lat && <a href={`https://www.google.com/maps?q=${r.truck_lat},${r.truck_lng}`} target="_blank" rel="noreferrer">Truck on map</a>}
-            </div>
-          </div>
-        ))}
-        {!routes.data?.routes?.length && <p className="muted">No routes yet.</p>}
+          ))}
+          {!routes.data?.routes?.length && <p className="muted">No routes yet.</p>}
+        </div>
       </Card>
     </div>
   );
@@ -600,12 +614,65 @@ function Routes() {
 function Redemptions() {
   const list = useLoader(() => api('/redemptions'));
   const [msg, setMsg] = useState({ kind: 'info', text: '' });
+  const [statusFilter, setStatusFilter] = useState('');
+  const [period, setPeriod] = useState('all');
+
+  const parseDate = (v) => (v ? new Date(String(v).replace(' ', 'T') + 'Z') : null);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const all = list.data?.redemptions || [];
+
+  let rows = all
+    .filter((r) => !statusFilter || r.status === statusFilter)
+    .filter((r) => {
+      if (period === 'all') return true;
+      const d = parseDate(r.created_at);
+      if (!d) return false;
+      if (period === 'today') return d >= today;
+      if (period === 'week') return d >= weekAgo;
+      if (period === 'month') return d >= monthStart;
+      return true;
+    });
+
+  const filtersActive = statusFilter || period !== 'all';
+
   async function decide(id, decision) {
     try { await api(`/redemptions/${id}/decision`, { method: 'PATCH', body: { decision } }); list.reload(); }
     catch (err) { setMsg({ kind: 'error', text: err.message }); }
   }
+
   return (
     <Card title="Reward redemptions" actions={<button className="btn ghost" onClick={list.reload}>Refresh</button>}>
+      <div className="ad-filterbar">
+        <label>
+          Status
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </label>
+        <label>
+          Period
+          <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+            <option value="all">All time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">This month</option>
+          </select>
+        </label>
+        <span className="ad-filterbar-count">
+          Showing <strong>{rows.length}</strong> of {all.length}
+        </span>
+        {filtersActive && (
+          <button type="button" className="ad-filterbar-clear" onClick={() => { setStatusFilter(''); setPeriod('all'); }}>
+            Clear filters
+          </button>
+        )}
+      </div>
       <Notice kind={msg.kind}>{msg.text}</Notice>
       <Table columns={[
         { key: 'created_at', label: 'Requested', render: (r) => fmtDate(r.created_at) },
@@ -613,9 +680,9 @@ function Redemptions() {
         { key: 'points_cost', label: 'Points' }, { key: 'certificate_code', label: 'Code' },
         { key: 'status', label: 'Status', render: (r) => <span className={`badge s-${r.status}`}>{cap(r.status)}</span> },
         { key: 'act', label: '', render: (r) => r.status === 'pending' ? (
-          <span className="row"><button className="btn small" onClick={() => decide(r.id, 'approved')}>Approve</button>
+          <span className="ad-actions"><button className="btn small" onClick={() => decide(r.id, 'approved')}>Approve</button>
             <button className="btn small danger" onClick={() => decide(r.id, 'rejected')}>Reject</button></span>) : null },
-      ]} rows={list.data?.redemptions} />
+      ]} rows={rows} empty="No redemptions match these filters." />
     </Card>
   );
 }
@@ -623,14 +690,60 @@ function Redemptions() {
 function Tickets() {
   const reports = useLoader(() => api('/dumping-reports'));
   const [filter, setFilter] = useState('');
-  const rows = (reports.data?.reports || []).filter((r) => !filter || r.status === filter);
+  const [period, setPeriod] = useState('all');
+
+  const parseDate = (v) => (v ? new Date(String(v).replace(' ', 'T') + 'Z') : null);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const all = reports.data?.reports || [];
+  const rows = all
+    .filter((r) => !filter || r.status === filter)
+    .filter((r) => {
+      if (period === 'all') return true;
+      const d = parseDate(r.created_at);
+      if (!d) return false;
+      if (period === 'today') return d >= today;
+      if (period === 'week') return d >= weekAgo;
+      if (period === 'month') return d >= monthStart;
+      return true;
+    });
+
+  const filtersActive = filter || period !== 'all';
   async function setStatus(id, status) { await api(`/dumping-reports/${id}/status`, { method: 'PATCH', body: { status } }); reports.reload(); }
+
   return (
-    <Card title="Illegal dumping ticket queue" actions={
-      <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-        <option value="">All statuses</option>
-        {['open', 'investigating', 'resolved', 'rejected'].map((s) => <option key={s} value={s}>{cap(s)}</option>)}
-      </select>}>
+    <Card title="Illegal dumping ticket queue">
+      <div className="ad-filterbar">
+        <label>
+          Status
+          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="">All</option>
+            <option value="open">Open</option>
+            <option value="investigating">Investigating</option>
+            <option value="resolved">Resolved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </label>
+        <label>
+          Period
+          <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+            <option value="all">All time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 days</option>
+            <option value="month">This month</option>
+          </select>
+        </label>
+        <span className="ad-filterbar-count">
+          Showing <strong>{rows.length}</strong> of {all.length}
+        </span>
+        {filtersActive && (
+          <button type="button" className="ad-filterbar-clear" onClick={() => { setFilter(''); setPeriod('all'); }}>
+            Clear filters
+          </button>
+        )}
+      </div>
       <Table columns={[
         { key: 'ticket_no', label: 'Ticket' }, { key: 'created_at', label: 'Filed', render: (r) => fmtDate(r.created_at) },
         { key: 'resident_name', label: 'Reported by' }, { key: 'location', label: 'Location' },
@@ -642,7 +755,7 @@ function Tickets() {
             <option value="">Set…</option>
             {['open', 'investigating', 'resolved', 'rejected'].filter((s) => s !== r.status).map((s) => <option key={s} value={s}>{cap(s)}</option>)}
           </select>) },
-      ]} rows={rows} empty="No tickets match this filter." />
+      ]} rows={rows} empty="No tickets match these filters." />
     </Card>
   );
 }
@@ -1170,7 +1283,7 @@ function RewardsInventory() {
               key: 'act',
               label: '',
               render: (r) => (
-                <span className="row">
+                <span className="ad-actions">
                   <button className="btn small" onClick={() => startEdit(r)}>Edit</button>
                   <button className="btn small danger" onClick={() => remove(r)}>Delete</button>
                 </span>
